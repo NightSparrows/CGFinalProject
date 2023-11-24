@@ -8,6 +8,9 @@ namespace TrashEngine {
 	{
 	public:
 		virtual ~GraphicsContext() = default;
+
+
+
 	};
 
 }

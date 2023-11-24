@@ -7,11 +7,15 @@ namespace TrashEngine {
 	class OpenGLVertexBuffer
 	{
 	public:
-		OpenGLVertexBuffer();
+		OpenGLVertexBuffer(GLsizeiptr size, GLenum usage);
 		virtual ~OpenGLVertexBuffer();
 
+		void storeData(GLsizeiptr size, GLintptr offset, const void* data);
+
 	private:
-		GLuint m_bufferId{ 0 };
+		GLuint m_handle{ 0 };
+		GLsizeiptr m_size;
+		GLenum m_usage{ GL_STATIC_DRAW };
 	};
 
 }

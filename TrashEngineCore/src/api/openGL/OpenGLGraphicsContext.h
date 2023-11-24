@@ -20,6 +20,7 @@ namespace TrashEngine {
 
 	private:
 		GLFWRenderWindow* m_window;
+
 	};
 
 }
