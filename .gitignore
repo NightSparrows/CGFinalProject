@@ -5,6 +5,7 @@ bin-int
 *.vcxproj.filters
 *.vcxproj
 *.vcxproj.user
+*.sln
 
 
 # Prerequisites
