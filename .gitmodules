@@ -1,0 +1,6 @@
+[submodule "TrashEngineCore/vendor/glfw"]
+	path = TrashEngineCore/vendor/glfw
+	url = https://github.com/NightSparrows/glfw
+[submodule "TrashEngineCore/vendor/spdlog"]
+	path = TrashEngineCore/vendor/spdlog
+	url = https://github.com/NightSparrows/spdlog
