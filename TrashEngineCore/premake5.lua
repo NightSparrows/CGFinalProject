@@ -4,6 +4,7 @@ project "TrashEngineCore"
 	language "C++"
 	kind "SharedLib"
 	staticruntime "off"
+	cppdialect "C++17"
 	
 	defines {
 		"NS_BUILD_SHARED",
@@ -20,7 +21,8 @@ project "TrashEngineCore"
 		"include",
 		"src",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.spdlog}"
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.imgui}"
 	}
 
 	files {
@@ -38,8 +40,21 @@ project "TrashEngineCore"
 	}
 
 	links {
-		"GLFW"
+		"GLFW",
+		"imgui"
 	}
 
-	
+	filter "configurations:Debug"
+		defines "NS_DEBUG"
+		symbols "On"
+
+	filter "system:windows"
+		systemversion "latest"
+		-- ignoredefaultlibraries { "msvctd" }
+
+	filter { "system:windows", "configurations:Debug" }
+		runtime "Debug"
+		
+	filter { "system:windows", "configurations:Release" }
+		runtime "Release"
 

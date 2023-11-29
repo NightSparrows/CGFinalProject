@@ -26,6 +26,7 @@ namespace TrashEngine {
 			NS_CORE_ERROR("Failed to create GLFW window.");
 			return false;
 		}
+		this->m_keyboard = CreateScope<Keyboard>(this->m_window.get());
 
 		if (!static_cast<OpenGLGraphicsContext*>(this->m_context.get())->init(this->m_window.get())) {
 			NS_CORE_ERROR("Failed to initialize OpenGL context");
@@ -67,4 +68,10 @@ namespace TrashEngine {
 		static_cast<GLFWRenderWindow*>(this->m_window.get())->destroy();
 		glfwTerminate();
 	}
+
+	GraphicsContext* GameEngine::getGraphicsContext()
+	{
+		return this->m_context.get();
+	}
+
 }

@@ -1,0 +1,137 @@
+#version 460 core
+
+struct PointLight {
+	vec4 position;		// pos(x, y, z), enable
+	vec4 color;
+	vec4 attenuation;	// attenuation.w = radius
+};
+
+struct LightGrid {
+	uint offset;
+	uint count;
+};
+
+// that why I want to switch to vulkan, I hate wasting memory
+struct VolumeTileAABB {
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+layout (binding = 0) uniform globalBuffer {
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 inverseProjectionMatrix;
+	vec4 cameraPosition;
+}GlobalUbo;
+
+layout (std430, binding = 1) buffer pointLightBuffer {
+	uvec4 numberOfPointLights;			// just in x
+	PointLight pointLights[];
+};
+
+layout (std430, binding = 2) buffer clusterAABB {
+	VolumeTileAABB clusters[];
+};
+
+layout (std430, binding = 3) buffer lightIndexBuffer {
+	uint globalLightIndexList[];
+};
+
+layout (std430, binding = 4) buffer lightGridBuffer {
+	LightGrid lightGrid[];
+};
+
+layout (std430, binding = 5) buffer globalIndexCountBuffer {
+	uint globalIndexCount;
+};
+
+// shared variables
+shared PointLight sharedLights[16 * 9 * 4];
+
+bool testSphereAABB(uint light, uint clusterIndex);
+float sqDistPointAABB(vec3 point, uint clusterIndex);
+
+const uint gridSizeX = 16;
+const uint gridSizeY = 8;
+const uint gridSizeZ = 24;
+
+layout(local_size_x = 16, local_size_y = 9, local_size_z = 4) in;
+void main() {
+	if (gl_GlobalInvocationID == uvec3(0)) {
+		globalIndexCount = 0;
+		if (gl_LocalInvocationIndex == 0) {	
+		}
+	}
+	uint threadCount = gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z;
+	uint lightCount = numberOfPointLights.x;
+	uint numberOfBatches = (lightCount + threadCount - 1) / threadCount;
+	
+	uint clusterIndex = gl_LocalInvocationIndex + gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z * gl_WorkGroupID.z;
+						
+
+	uint visibleLightCount = 0;
+	uint visibleLightIndices[100];
+
+	for(uint batch = 0; batch < numberOfBatches; batch++) {
+		uint lightIndex = batch * threadCount + gl_LocalInvocationIndex;
+		
+		lightIndex = min(lightIndex, lightCount);
+		
+		sharedLights[gl_LocalInvocationIndex] = pointLights[lightIndex];
+		
+		barrier();
+		
+		for(uint light = 0; light < lightCount; light++) {
+			if (sharedLights[light].position.w > 0) {
+				if (testSphereAABB(light, clusterIndex)) {
+					visibleLightIndices[visibleLightCount] = batch * threadCount + light;
+					visibleLightCount += 1;
+				}
+			}
+		}
+	}
+	
+	barrier();
+	
+	uint offset = atomicAdd(globalIndexCount, visibleLightCount);
+	
+	for(uint i = 0; i < visibleLightCount; i++) {
+		globalLightIndexList[offset + i] = visibleLightIndices[i];
+	}
+
+	lightGrid[clusterIndex].offset = offset;
+	lightGrid[clusterIndex].count = visibleLightCount;
+	
+}
+
+bool testSphereAABB(uint light, uint clusterIndex){
+	// for testing
+	//return true;
+    float radius = sharedLights[light].attenuation.w;
+    vec3 center  = (GlobalUbo.viewMatrix * vec4(sharedLights[light].position.xyz, 1.0)).xyz;
+    float squaredDistance = sqDistPointAABB(center, clusterIndex);
+
+    return squaredDistance <= (radius * radius);
+}
+
+float sqDistPointAABB(vec3 point, uint clusterIndex){
+	/*
+	float sqDist = 0.0;
+    VolumeTileAABB currentCell = clusters[clusterIndex];
+    clusters[clusterIndex].maxPoint[3] = clusterIndex;
+    for(int i = 0; i < 3; ++i){
+        float v = point[i];
+        if(v < currentCell.minPoint[i]){
+            sqDist += (currentCell.minPoint[i] - v) * (currentCell.minPoint[i] - v);
+        }
+        if(v > currentCell.maxPoint[i]){
+            sqDist += (v - currentCell.maxPoint[i]) * (v - currentCell.maxPoint[i]);
+        }
+    }
+
+    return sqDist;
+	*/
+	vec3 closest = max(clusters[clusterIndex].minPoint.xyz, min(point, clusters[clusterIndex].maxPoint.xyz));
+	vec3 dist = closest - point;
+	return dot(dist, dist);
+}

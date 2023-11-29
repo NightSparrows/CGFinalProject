@@ -2,6 +2,7 @@
 .vs
 bin
 bin-int
+data
 *.vcxproj.filters
 *.vcxproj
 *.vcxproj.user

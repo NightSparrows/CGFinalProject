@@ -1,0 +1,109 @@
+#version 460
+
+layout (binding = 0) uniform globalBuffer {
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 inverseProjectionMatrix;
+	vec4 cameraPosition;
+}GlobalUbo;
+
+// not use in this pass
+// layout (binding = 1) buffer pointLightsBuffer;
+
+// that why I want to switch to vulkan, I hate wasting memory
+struct VolumeTileAABB {
+	vec4 minPoint;
+	vec4 maxPoint;
+};
+
+layout (binding = 2) buffer clusterAABB {
+	VolumeTileAABB cluster[];
+};
+
+uniform uvec4 tileSizes;
+uniform uvec2 screenDimensions;			// size of screenToView
+
+// zNear, nFar
+uniform vec2 zValue;
+
+vec4 clipToView(vec4 clip) {
+	vec4 view = GlobalUbo.inverseProjectionMatrix * clip;
+	
+	view = view / view.w;
+	
+	return view;
+}
+
+vec4 screen2View(vec4 screen) {
+	vec2 texCoord = screen.xy / screenDimensions.xy;
+	
+	// if it is vulkan, the texCorrd.y should be inverse
+	vec4 clip = vec4(texCoord * 2.0 - 1.0, screen.z, screen.w);
+	
+	return clipToView(clip);
+}
+
+vec3 lineIntersectionToZPlane(vec3 A, vec3 B, float zDistance) {
+	vec3 normal = vec3(0, 0, 1);
+	
+	vec3 ab = B - A;
+	
+	float t = (zDistance - dot(normal, A)) / dot(normal, ab);
+	
+	vec3 result = A + t * ab;
+	
+	return result;
+}
+
+const uint gridSizeX = 16;
+const uint gridSizeY = 8;
+const uint gridSizeZ = 24;
+// calculate each cluster AABB in view space
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+void main() {
+	const vec3 eyePos = vec3(0.0);
+	
+	float zNear = zValue.x;// Near plane distance in view space depth
+	float zFar = zValue.y;// Far plane distance in view space depth
+	
+	
+	// How many pixels in x does a square tile use
+	uint tileSizePx = tileSizes[3];
+	
+	// Linear ID of the thread/cluster
+	uint clusterIndex = gl_WorkGroupID.x +
+                     gl_WorkGroupID.y * gridSizeX +
+                     gl_WorkGroupID.z * (gridSizeX * gridSizeY);
+	//uint clusterIndex = gl_GlobalInvocationID;
+
+	// min and max point in screen space
+	vec4 maxPoint_sS = vec4(vec2(gl_WorkGroupID.x + 1, gl_WorkGroupID.y + 1) * tileSizePx, 1.0, 1.0); // top right
+	vec4 minPoint_sS = vec4(gl_WorkGroupID.xy * tileSizePx, 1.0, 1.0); // bottom left
+
+	// in view space
+	vec3 maxPoint_vS = screen2View(maxPoint_sS).xyz;
+	vec3 minPoint_vS = screen2View(minPoint_sS).xyz;
+	
+	float tileNear = -zNear * pow(zFar / zNear, float(gl_WorkGroupID.z) / float(gridSizeZ));
+	float tileFar = -zNear * pow(zFar / zNear, float(gl_WorkGroupID.z + 1) / float(gridSizeZ));
+	
+	//float tileNear = (zFar - zNear) * (gl_WorkGroupID.z / float(gridSizeZ)) + zNear;
+	//float tileFar = (zFar - zNear) * ((gl_WorkGroupID.z + 1) / float(gridSizeZ)) + zNear;
+	
+	vec3 minPointNear = lineIntersectionToZPlane(eyePos, minPoint_vS, tileNear );
+    vec3 minPointFar  = lineIntersectionToZPlane(eyePos, minPoint_vS, tileFar );
+    vec3 maxPointNear = lineIntersectionToZPlane(eyePos, maxPoint_vS, tileNear );
+    vec3 maxPointFar  = lineIntersectionToZPlane(eyePos, maxPoint_vS, tileFar );
+
+    vec3 minPointAABB = min(min(minPointNear, minPointFar),min(maxPointNear, maxPointFar));
+    vec3 maxPointAABB = max(max(minPointNear, minPointFar),max(maxPointNear, maxPointFar));
+
+    //Getting the min max point in view space
+    cluster[clusterIndex].minPoint  = vec4(minPointAABB , 0.0);
+    cluster[clusterIndex].maxPoint  = vec4(maxPointAABB , 0.0);
+	
+	
+}
+
+
+

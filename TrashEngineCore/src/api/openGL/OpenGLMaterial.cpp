@@ -11,7 +11,27 @@ namespace TrashEngine {
 		config.anisotropicFiltering = true;
 		config.mipMapping = true;
 
-		return this->m_diffuseTexture->loadTexture2D(filePath, config);
+		bool result = this->m_diffuseTexture->loadTexture2D(filePath, config);
+		if (!result) {
+			this->m_diffuseTexture.reset();
+		}
+		return result;
+	}
+
+	bool OpenGLMaterial::loadNormalTexture(const std::string& filePath)
+	{
+		this->m_normalTexture = CreateScope<OpenGLTexture>();
+
+		OpenGLTexture::TextureConfig config;
+		config.anisotropicFiltering = true;
+		config.mipMapping = true;
+
+		bool result = this->m_normalTexture->loadTexture2D(filePath, config);
+		if (!result) {
+			this->m_normalTexture.reset();
+		}
+
+		return result;
 	}
 
 }

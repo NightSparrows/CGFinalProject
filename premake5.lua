@@ -22,6 +22,7 @@ workspace "CGFinalProject"
 
 group "Dependencies"
 	include "TrashEngineCore/vendor/glfw"
+	include "TrashEngineCore/vendor/imgui"
 group ""
 
 include "FinalProject"

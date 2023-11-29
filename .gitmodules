@@ -4,3 +4,9 @@
 [submodule "TrashEngineCore/vendor/spdlog"]
 	path = TrashEngineCore/vendor/spdlog
 	url = https://github.com/NightSparrows/spdlog
+[submodule "TrashEngineCore/vendor/entt"]
+	path = TrashEngineCore/vendor/entt
+	url = https://github.com/skypjack/entt
+[submodule "TrashEngineCore/vendor/imgui"]
+	path = TrashEngineCore/vendor/imgui
+	url = https://github.com/NightSparrows/imgui

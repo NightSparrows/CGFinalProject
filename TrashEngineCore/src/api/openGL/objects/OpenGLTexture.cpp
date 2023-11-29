@@ -51,7 +51,7 @@ namespace TrashEngine {
 		if (config.mipMapping) {
 			glGenerateTextureMipmap(this->m_textureHandle);
 			glTextureParameteri(this->m_textureHandle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTextureParameteri(this->m_textureHandle, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTextureParameteri(this->m_textureHandle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			if (glfwExtensionSupported("GL_EXT_texture_filter_anisotropic") && config.anisotropicFiltering) {
 				float amount;

@@ -20,6 +20,7 @@ namespace TrashEngine {
 		glm::vec3 diffuse;
 		glm::vec3 specular;
 		float reflectivity;
+		float shininess;
 
 	}MaterialData;
 

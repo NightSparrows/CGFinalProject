@@ -14,6 +14,11 @@ namespace TrashEngine {
 	public:
 		~OpenGLGraphicsContext() = default;
 
+		Ref<StaticModel> createStaticModel() override;
+
+		Ref<MasterRenderer> createMasterRenderer(glm::ivec2 renderSize) override;
+
+
 		bool init(RenderWindow* window);
 
 		void cleanUp();

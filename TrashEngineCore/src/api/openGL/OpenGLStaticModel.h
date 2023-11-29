@@ -22,6 +22,10 @@ namespace TrashEngine {
 
 		bool loadData(StaticModelData* modelData) override;
 
+		void bind();
+
+		const std::vector<MeshInfo>& getMeshes() const { return this->m_meshes; }
+
 	protected:
 		void deleteBuffers();
 

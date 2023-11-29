@@ -26,6 +26,9 @@ namespace TrashEngine {
 	bool GLFWRenderWindow::create()
 	{
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+#ifdef NS_DEBUG
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif
 
 		this->m_handle = glfwCreateWindow(this->m_data.width, this->m_data.height, this->m_data.title.c_str(), nullptr, nullptr);
 

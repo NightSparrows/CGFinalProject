@@ -27,9 +27,14 @@ namespace TrashEngine {
 			material->setDiffuse(materialData.diffuse);
 			material->setSpecular(materialData.specular);
 			material->setReflectivity(materialData.reflectivity);
+			material->setShininess(materialData.shininess);
 
 			if (!materialData.diffuseTexture.empty()) {
 				material->loadDiffuseTexture(materialData.diffuseTexture);
+			}
+
+			if (!materialData.normalTexture.empty()) {
+				material->loadNormalTexture(materialData.normalTexture);
 			}
 			
 			this->m_materials.emplace_back(std::move(material));
@@ -55,9 +60,25 @@ namespace TrashEngine {
 
 		glEnableVertexArrayAttrib(this->m_vaoHandle, 2);
 		glVertexArrayAttribBinding(this->m_vaoHandle, 2, 0);
-		glVertexArrayAttribFormat(this->m_vaoHandle, 2, 2, GL_FLOAT, GL_FALSE, offsetof(StaticModelData::VertexData, texCoord));
+		glVertexArrayAttribFormat(this->m_vaoHandle, 2, 3, GL_FLOAT, GL_FALSE, offsetof(StaticModelData::VertexData, tangent));
+
+		glEnableVertexArrayAttrib(this->m_vaoHandle, 3);
+		glVertexArrayAttribBinding(this->m_vaoHandle, 3, 0);
+		glVertexArrayAttribFormat(this->m_vaoHandle, 3, 2, GL_FLOAT, GL_FALSE, offsetof(StaticModelData::VertexData, texCoord));
  
+		this->m_meshes.resize(modelData->meshes.size());
+		for (uint32_t i = 0; i < modelData->meshes.size(); i++) {
+			this->m_meshes[i].indexCount = modelData->meshes[i].indexCount;
+			this->m_meshes[i].indexOffset = modelData->meshes[i].indexOffset;
+			this->m_meshes[i].material = this->m_materials[modelData->meshes[i].materialIndex].get();
+		}
+
 		return true;
+	}
+
+	void OpenGLStaticModel::bind()
+	{
+		glBindVertexArray(this->m_vaoHandle);
 	}
 
 	void OpenGLStaticModel::deleteBuffers()

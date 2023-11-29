@@ -4,6 +4,7 @@
 
 #include <spdlog/spdlog.h>
 
+
 namespace TrashEngine {
 
 	class Logger

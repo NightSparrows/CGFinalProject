@@ -1,0 +1,188 @@
+#version 460
+
+layout (binding = 0, rgba32f) uniform readonly image2D GBuffer0;
+layout (binding = 1, rgba32f) uniform readonly image2D GBuffer1;
+layout (binding = 2, rgba32f) uniform readonly image2D GBuffer2;
+layout (binding = 3, rgba32f) uniform readonly image2D GBuffer3;
+layout (binding = 4, rgba32f) uniform readonly image2D GBuffer4;
+layout (location = 0) uniform sampler2D depthImage;
+
+layout (binding = 6) uniform writeonly image2D outputImage;
+
+// binding global uniform buffer for
+layout (binding = 0) uniform globalBuffer {
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 inverseProjectionMatrix;
+	vec4 cameraPosition;
+}GlobalUbo;
+
+struct PointLight {
+	vec4 position;		// pos(x, y, z), enable
+	vec4 color;
+	vec4 attenuation;	// attenuation.w = radius
+};
+
+struct LightGrid {
+	uint offset;
+	uint count;
+};
+
+layout (std430, binding = 1) buffer pointLightBuffer {
+	uvec4 numberOfPointLights;			// just in x
+	PointLight pointLights[];
+};
+
+layout (std430, binding = 3) buffer lightIndexBuffer {
+	uint globalLightIndexList[];
+};
+
+layout (std430, binding = 4) buffer lightGridBuffer {
+	LightGrid lightGrid[];
+};
+
+const uint gridSizeX = 16;
+const uint gridSizeY = 9;
+const uint gridSizeZ = 24;
+const float zNear = 0.1f;
+const float zFar = 1000f;
+const uint sizeX = uint(ceil(1280.0 / float(gridSizeX)));
+
+float linearDepth(float depthSample);
+
+struct Material {
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	float shininess;
+	float reflectivity;
+};
+
+vec3 calcPointLight(PointLight light, vec3 FragPos, vec3 FragNormal, Material material) {
+	
+	vec3 totalLightColor = vec3(0.0);
+	
+	vec3 lightToPosVector = light.position.xyz - FragPos;
+	vec3 unitLightVector = normalize(lightToPosVector);
+	
+	// diffuse
+	float nDotl = dot(FragNormal, unitLightVector);
+	
+	if (nDotl > 0.0) {
+		float lightDistance = length(lightToPosVector);
+		
+		vec3 lightColor = nDotl * light.color.xyz;
+		
+		float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * lightDistance + light.attenuation.z * lightDistance * lightDistance);
+		
+		totalLightColor += lightColor * attenuation * material.diffuse;
+	}
+	
+	return totalLightColor;
+	
+}
+
+// test
+vec3 colors[7] = vec3[](
+   vec3( 0,  0,  1), vec3( 0, 1, 0),  vec3(0, 1,  1),
+   vec3(1,  0,  0),  vec3( 1,  0,  1), vec3( 1, 1, 0),  vec3(1, 1, 1)
+);
+
+// 1 pixel -> 1 thread
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+void main() {
+
+	vec4 debug_Color = vec4(0.0, 0.0, 0.0, 0.0);
+
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	
+	// calc what cluster this pixel in
+	// scale = (float)gridSizeZ / std::log2f(zFar / zNear) ;
+	// bias    = -((float)gridSizeZ * std::log2f(zNear) / std::log2f(zFar / zNear)) ;
+	// for fast purpose I use const variable
+	vec2 texCoord = vec2(pixel_coords.x / 1280.0, pixel_coords.y / 720.0);
+	float currentDepth = texture(depthImage, texCoord).r;
+	float w = -1.0 / GlobalUbo.projectionMatrix[2][3];
+	currentDepth = currentDepth * w;
+	
+	
+	float scale = float(gridSizeZ) / log2(zFar / zNear);
+	float bias = -(float(gridSizeZ) * log2(zNear) / log2(zFar / zNear));
+	uint zTile = uint(max(log2(linearDepth(currentDepth))/* * scale * bias*/, 0.0));
+	//uint zTile = uint(max(log2(currentDepth * (zFar - zNear)), 0.0));
+	
+	if (zTile > 24) {
+		//debug_Color.rg = vec2(1.0);
+	}
+	
+	//uint zTile = uint(max(log2(currentDepth) * scale * bias, 0.0));
+	ivec3 clusterVector = ivec3(pixel_coords.xy / sizeX, zTile);
+	uint clusterIndex = clusterVector.x +
+						gridSizeX * clusterVector.y +
+						(gridSizeX * gridSizeY) * clusterVector.z;
+	// 我懷疑clusterIndex計算有問題
+
+	
+	vec4 GBufferTexture0 = imageLoad(GBuffer0, pixel_coords);
+	vec4 GBufferTexture1 = imageLoad(GBuffer1, pixel_coords);
+	vec4 GBufferTexture2 = imageLoad(GBuffer2, pixel_coords);
+	vec4 GBufferTexture3 = imageLoad(GBuffer3, pixel_coords);
+	vec4 GBufferTexture4 = imageLoad(GBuffer4, pixel_coords);
+	
+	vec3 fragPosition = GBufferTexture0.rgb;
+	vec3 normal = normalize(vec3(GBufferTexture0.w, GBufferTexture1.xy));
+	
+	// current material
+	Material material;
+	material.ambient = vec3(GBufferTexture1.zw, GBufferTexture2.x);
+	material.diffuse = GBufferTexture2.yzw;
+	material.specular = GBufferTexture3.xyz;
+	material.shininess = GBufferTexture3.w;
+	material.reflectivity = GBufferTexture4.x;
+
+	vec3 diffuseColor = GBufferTexture4.yzw;
+	
+	uint pointLightCount = lightGrid[clusterIndex].count;
+	uint pointLightOffset = lightGrid[clusterIndex].offset;
+	
+	vec3 totalLightColor = vec3(0.0);
+	/*
+	for(uint i = 0; i < pointLightCount; i++) {
+		uint lightVectorIndex = globalLightIndexList[pointLightOffset + i];
+		// point light calculation
+		if (pointLightCount != 2) {
+			//debug_Color.g = 1.0;
+		}
+		totalLightColor += calcPointLight(pointLights[lightVectorIndex], fragPosition, normal);
+	}
+	*/
+	
+	// 先使用純deferred shading 因為沒時間研究
+	for(uint i = 0; i < numberOfPointLights.x; i++) {
+		totalLightColor += calcPointLight(pointLights[i], fragPosition, normal, material);
+	}
+	
+	totalLightColor = max(totalLightColor, 0.1);
+	
+	vec4 out_Color = vec4(totalLightColor, 1.0) * vec4(diffuseColor, 1.0);
+	//debug_Color.b += 0.1 * pointLightCount;
+	//out_Color += debug_Color;
+
+	// test slicing
+	//out_Color = vec4(colors[uint(mod(zTile, 7))], 1.0);
+	//out_Color = vec4(currentDepth, 0, 0, 1.0);
+	
+	// OpenGL is not inverse, but vulkan is inverse in y coordinate
+	imageStore(outputImage, ivec2(pixel_coords.x, pixel_coords.y), out_Color);
+	
+	
+}
+
+float linearDepth(float depthSample){
+    float depthRange = 2.0 * depthSample - 1.0;
+    //float depthRange = depthSample;
+    // Near... Far... wherever you are...
+    float linear = 2.0 * zNear * zFar / (zFar + zNear - depthRange * (zFar - zNear));
+    return linear;
+}
+

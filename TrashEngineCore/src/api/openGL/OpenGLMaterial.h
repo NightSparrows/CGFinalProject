@@ -14,6 +14,8 @@ namespace TrashEngine {
 
 		bool loadDiffuseTexture(const std::string& filePath);
 
+		bool loadNormalTexture(const std::string& filePath);
+
 		inline const glm::vec3& getDiffuseColor() const { return this->m_diffuseColor; }
 
 		void setDiffuseColor(const glm::vec3& color) { this->m_diffuseColor = color; }
@@ -26,6 +28,8 @@ namespace TrashEngine {
 
 		inline float getReflectivity() const { return this->m_reflectivity; }
 
+		inline float getShininess() const { return this->m_shininess; }
+
 		void setAmbient(const glm::vec3& ambient) { this->m_ambient = ambient; }
 
 		void setDiffuse(const glm::vec3& diffuse) { this->m_diffuse = diffuse; }
@@ -34,15 +38,23 @@ namespace TrashEngine {
 
 		void setReflectivity(float reflectivity) { this->m_reflectivity = reflectivity; }
 
+		void setShininess(float shininess) { this->m_shininess = shininess; }
+
+		OpenGLTexture* getDiffuseTexture() { return this->m_diffuseTexture.get(); }
+
+		OpenGLTexture* getNormalTexture() { return this->m_normalTexture.get(); }
+
 	private:
 
 		glm::vec3 m_diffuseColor;
 		Scope<OpenGLTexture> m_diffuseTexture;
+		Scope<OpenGLTexture> m_normalTexture;
 
 		glm::vec3 m_ambient;
 		glm::vec3 m_diffuse;
 		glm::vec3 m_specular;
 		float m_reflectivity;
+		float m_shininess;
 	};
 
 }
