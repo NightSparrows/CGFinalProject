@@ -17,6 +17,16 @@ namespace TrashEngine {
         return CreateRef<OpenGLStaticModel>();
     }
 
+    Ref<AnimatedModel> OpenGLGraphicsContext::createAnimatedModel()
+    {
+        return CreateRef<OpenGLAnimatedModel>();
+    }
+
+    Ref<AnimatedModelAnimator> OpenGLGraphicsContext::createAnimatedModelAnimator(Ref<AnimatedModel> animatedModel)
+    {
+        return CreateRef<OpenGLAnimatedModelAnimator>(StaticCastRef<OpenGLAnimatedModel>(animatedModel));
+    }
+
     Ref<MasterRenderer> OpenGLGraphicsContext::createMasterRenderer(glm::ivec2 renderSize)
     {
         return CreateRef<OpenGLMasterRenderer>(renderSize);

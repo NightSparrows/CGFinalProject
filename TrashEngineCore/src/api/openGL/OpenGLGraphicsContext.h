@@ -16,6 +16,10 @@ namespace TrashEngine {
 
 		Ref<StaticModel> createStaticModel() override;
 
+		Ref<AnimatedModel> createAnimatedModel() override;
+
+		Ref<AnimatedModelAnimator> createAnimatedModelAnimator(Ref<AnimatedModel> animatedModel) override;
+
 		Ref<MasterRenderer> createMasterRenderer(glm::ivec2 renderSize) override;
 
 

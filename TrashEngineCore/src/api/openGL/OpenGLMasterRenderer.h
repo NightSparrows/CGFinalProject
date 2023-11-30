@@ -4,6 +4,7 @@
 
 #include "objects/OpenGLShaderProgram.h"
 #include "renderer/OpenGLStaticModelRenderer.h"
+#include "renderer/OpenGLAnimatedModelRenderer.h"
 
 #define MAX_POINT_LIGHTS	20000
 // maximum global lights count in global light list
@@ -84,6 +85,7 @@ namespace TrashEngine {
 		GLuint m_rawSceneTexture;
 
 		Scope<OpenGLStaticModelRenderer> m_staticModelRenderer;
+		Scope<OpenGLAnimatedModelRenderer> m_animatedModelRenderer;
 
 		//The variables that determine the size of the cluster grid. They're hand picked for now, but
 		//there is some space for optimization and tinkering as seen on the Olsson paper and the ID tech6

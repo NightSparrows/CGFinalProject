@@ -22,6 +22,7 @@ TrashEngine::Ref<TrashEngine::MasterRenderer> masterRenderer;
 TrashEngine::Ref<TrashEngine::StaticModel> testModel;
 TrashEngine::Ref<TrashEngine::Scene> scene;
 TrashEngine::Entity testEntity;
+TrashEngine::Entity testEntity2;
 TrashEngine::Camera camera(1280.f / 720.f, glm::radians(70.f), 0.1f, 1000.f);
 TrashEngine::Entity testLightEntity;
 
@@ -58,6 +59,10 @@ void FinalProjectState::onInit()
 	modelData->materials[0].diffuseTexture = "res/wallDiffuse.png";
 	modelData->materials[0].normalTexture = "res/wallNormal.png";
 	modelData->materials[0].diffuse = glm::vec3(1);
+	modelData->materials[0].ambient = glm::vec3(0);
+	modelData->materials[0].specular = glm::vec3(0.5);
+	modelData->materials[0].shininess = 10.f;
+	modelData->materials[0].reflectivity = 1.f;
 	modelData->meshes.resize(1);
 	modelData->meshes[0].indexCount = 6;
 	modelData->meshes[0].materialIndex = 0;
@@ -68,6 +73,7 @@ void FinalProjectState::onInit()
 	testEntity = scene->createEntity();
 	auto& modelCom = testEntity.addComponent<TrashEngine::StaticModelComponent>();
 	modelCom.model = testModel;
+	testEntity.getComponent<TrashEngine::TransformComponent>().transform.setPosition(glm::vec3(0, 0, -10));
 
 	testLightEntity = scene->createEntity("Light");
 	auto& lightCom = testLightEntity.addComponent<TrashEngine::PointLight>();
@@ -75,8 +81,8 @@ void FinalProjectState::onInit()
 	lightCom.enabled = 1.f;
 	lightCom.color = glm::vec3(5.f, 5.f, 5.f);
 	lightCom.attenuation.x = 1.f;
-	lightCom.attenuation.y = 0.09f;
-	lightCom.attenuation.z = 0.032f;
+	lightCom.attenuation.y = 0.009f;
+	lightCom.attenuation.z = 0.0032f;
 	lightCom.attenuation.w = 20.f;
 
 	
@@ -90,6 +96,7 @@ void FinalProjectState::onInit()
 	lightCom2.attenuation.z = 0.032f;
 	lightCom2.attenuation.w = 20.f;
 	
+	/*
 	for (uint32_t y = 0; y < 20; y++) {
 		for (uint32_t x = 0; x < 20; x++) {
 			auto testLightEnt = scene->createEntity("testLight");
@@ -103,14 +110,34 @@ void FinalProjectState::onInit()
 			lightC.attenuation.w = 20.f;
 
 		}
-	}
+	}*/
 
+	testEntity2 = scene->createEntity("test entity2");
 
+	//auto testAnimatedModelData = TrashEngine::ModelLoader::LoadAnimatedModelFromFile("res/thinMatrixModel/model.dae", "res/thinMatrixModel");
+	auto testAnimatedModelData = TrashEngine::ModelLoader::LoadAnimatedModelFromFile("res/archer/dae/archer_walk.dae", "res/archer/textures");
+	testAnimatedModelData->materials[0].diffuseTexture = "res/archer/textures/Archer.png";
+	auto& modelC = testEntity2.addComponent<TrashEngine::AnimatedModelComponent>();
+	modelC.model = this->m_engine->getGraphicsContext()->createAnimatedModel();
+	modelC.model->loadData(testAnimatedModelData.get());
+	auto& testEnt2Transform = testEntity2.getComponent<TrashEngine::TransformComponent>();
+	testEnt2Transform.transform.setPosition(glm::vec3(-25, 0, 0));
+	testEnt2Transform.transform.rotate(glm::vec3(1, 0, 0), -90.f);
+	auto& animatorCom = testEntity2.addComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+	animatorCom.animator = this->m_engine->getGraphicsContext()->createAnimatedModelAnimator(modelC.model);
+	//animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/thinMatrixModel/model.dae"));
+	animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_walk.dae"));
+	animatorCom.animator->addAnimation("idle", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_hit.dae"));
+	animatorCom.animator->play("walk");
+	animatorCom.animator->play("idle");
 }
 
 float testTime = 0;
 void FinalProjectState::onUpdate(TrashEngine::Time delta)
 {
+	auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+	animatorCom.animator->update(delta);
+
 	auto& light = testLightEntity.getComponent<TrashEngine::PointLight>();
 
 	light.position.x = sin(testTime) * 50.f;

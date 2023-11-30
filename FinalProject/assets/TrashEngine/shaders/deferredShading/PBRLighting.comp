@@ -58,12 +58,15 @@ struct Material {
 	float reflectivity;
 };
 
-vec3 calcPointLight(PointLight light, vec3 FragPos, vec3 FragNormal, Material material) {
+vec3 calcPointLight(PointLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragNormal, Material material) {
 	
 	vec3 totalLightColor = vec3(0.0);
 	
 	vec3 lightToPosVector = light.position.xyz - FragPos;
 	vec3 unitLightVector = normalize(lightToPosVector);
+	
+	// ambient
+	totalLightColor += light.color.xyz * material.ambient;
 	
 	// diffuse
 	float nDotl = dot(FragNormal, unitLightVector);
@@ -76,6 +79,15 @@ vec3 calcPointLight(PointLight light, vec3 FragPos, vec3 FragNormal, Material ma
 		float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * lightDistance + light.attenuation.z * lightDistance * lightDistance);
 		
 		totalLightColor += lightColor * attenuation * material.diffuse;
+	}
+	
+	// specular
+	vec3 specularReflection = reflect(-unitLightVector, FragNormal);
+	float reflection = dot(specularReflection, unitViewDir);
+	
+	if (reflection > 0) {
+		vec3 specularColor = light.color.xyz * material.specular * pow(reflection, material.shininess) * material.reflectivity;
+		totalLightColor += specularColor;
 	}
 	
 	return totalLightColor;
@@ -132,6 +144,8 @@ void main() {
 	vec3 fragPosition = GBufferTexture0.rgb;
 	vec3 normal = normalize(vec3(GBufferTexture0.w, GBufferTexture1.xy));
 	
+	vec3 unitViewDir = normalize(GlobalUbo.cameraPosition.xyz - fragPosition);
+	
 	// current material
 	Material material;
 	material.ambient = vec3(GBufferTexture1.zw, GBufferTexture2.x);
@@ -141,30 +155,34 @@ void main() {
 	material.reflectivity = GBufferTexture4.x;
 
 	vec3 diffuseColor = GBufferTexture4.yzw;
+	vec4 out_Color = vec4(0, 0, 0, 1);
 	
-	uint pointLightCount = lightGrid[clusterIndex].count;
-	uint pointLightOffset = lightGrid[clusterIndex].offset;
-	
-	vec3 totalLightColor = vec3(0.0);
-	/*
-	for(uint i = 0; i < pointLightCount; i++) {
-		uint lightVectorIndex = globalLightIndexList[pointLightOffset + i];
-		// point light calculation
-		if (pointLightCount != 2) {
-			//debug_Color.g = 1.0;
+	if (diffuseColor.x > 0 || diffuseColor.y > 0 || diffuseColor.z > 0) {
+		uint pointLightCount = lightGrid[clusterIndex].count;
+		uint pointLightOffset = lightGrid[clusterIndex].offset;
+		
+		vec3 totalLightColor = vec3(0.0);
+		/*
+		for(uint i = 0; i < pointLightCount; i++) {
+			uint lightVectorIndex = globalLightIndexList[pointLightOffset + i];
+			// point light calculation
+			if (pointLightCount != 2) {
+				//debug_Color.g = 1.0;
+			}
+			totalLightColor += calcPointLight(pointLights[lightVectorIndex], fragPosition, normal);
 		}
-		totalLightColor += calcPointLight(pointLights[lightVectorIndex], fragPosition, normal);
+		*/
+		
+		// 先使用純deferred shading 因為沒時間研究
+		for(uint i = 0; i < numberOfPointLights.x; i++) {
+			totalLightColor += calcPointLight(pointLights[i], unitViewDir, fragPosition, normal, material);
+		}
+		
+		totalLightColor = max(totalLightColor, 0.1);
+		
+		out_Color = vec4(totalLightColor, 1.0) * vec4(diffuseColor, 1.0);
+		
 	}
-	*/
-	
-	// 先使用純deferred shading 因為沒時間研究
-	for(uint i = 0; i < numberOfPointLights.x; i++) {
-		totalLightColor += calcPointLight(pointLights[i], fragPosition, normal, material);
-	}
-	
-	totalLightColor = max(totalLightColor, 0.1);
-	
-	vec4 out_Color = vec4(totalLightColor, 1.0) * vec4(diffuseColor, 1.0);
 	//debug_Color.b += 0.1 * pointLightCount;
 	//out_Color += debug_Color;
 

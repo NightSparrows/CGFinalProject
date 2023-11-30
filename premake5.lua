@@ -23,6 +23,7 @@ workspace "CGFinalProject"
 group "Dependencies"
 	include "TrashEngineCore/vendor/glfw"
 	include "TrashEngineCore/vendor/imgui"
+	include "TrashEngineCore/vendor/assimp"
 group ""
 
 include "FinalProject"

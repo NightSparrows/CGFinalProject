@@ -24,6 +24,7 @@ namespace TrashEngine {
 		//glNamedBufferStorage(this->m_globalUniformBuffer, sizeof(GlobalUBOData), nullptr, GL_MAP_WRITE_BIT);
 
 		this->m_staticModelRenderer = CreateScope<OpenGLStaticModelRenderer>();
+		this->m_animatedModelRenderer = CreateScope<OpenGLAnimatedModelRenderer>();
 
 		OpenGLShaderProgramBuilder shaderBuilder;
 		shaderBuilder.addShaderFromFile("assets/TrashEngine/shaders/common/simpleQuad.vert", GL_VERTEX_SHADER);
@@ -148,6 +149,7 @@ namespace TrashEngine {
 
 		// prepare Scene in renderers
 		this->m_staticModelRenderer->prepareScene(scene);
+		this->m_animatedModelRenderer->prepareScene(scene);
 	}
 
 	void OpenGLMasterRenderer::renderScene(Camera* camera, glm::ivec2 renderSize, GLuint drawTexture)
@@ -173,6 +175,7 @@ namespace TrashEngine {
 		glEnable(GL_DEPTH_TEST);
 		/// renderers draw
 		this->m_staticModelRenderer->render();
+		this->m_animatedModelRenderer->render();
 		/// end renderers draw
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

@@ -27,20 +27,9 @@ namespace TrashEngine {
 			NS_CORE_ERROR("Failed to load texture: {0}", filePath);
 			return false;
 		}
-		GLenum internalFormat = 0, dataFormat = 0;
-		if (channels == 4) {
-			internalFormat = GL_RGBA8;
-			dataFormat = GL_RGBA;
-		}
-		else if (channels == 3) {
-			internalFormat = GL_RGB8;
-			dataFormat = GL_RGB;
-		}
-		else {
-			NS_CORE_ERROR("Unknown texture format: {0}", filePath);
-			stbi_image_free(data);
-			return false;
-		}
+		GLenum internalFormat = GL_RGBA8;
+		GLenum dataFormat = GL_RGBA;
+
 		glTextureStorage2D(this->m_textureHandle, 1, internalFormat, width, height);
 		glTextureSubImage2D(this->m_textureHandle, 0, 0, 0, width, height, dataFormat, GL_UNSIGNED_BYTE, data);
 		stbi_image_free(data);

@@ -10,6 +10,9 @@ namespace TrashEngine {
 	class Transform
 	{
 	public:
+		Transform() = default;
+
+		Transform(const glm::mat4& matrix);
 
 		NS_API void setScale(const glm::vec3& scale);
 
@@ -35,7 +38,11 @@ namespace TrashEngine {
 
 		NS_API operator glm::mat4();
 
+		NS_API operator glm::mat4() const;
+
 		NS_API glm::mat4 matrix();
+
+		NS_API static Transform Interpolate(const Transform& a, const Transform& b, float progression);
 
 	private:
 		bool m_modified{false};

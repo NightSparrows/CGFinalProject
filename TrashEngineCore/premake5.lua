@@ -22,7 +22,8 @@ project "TrashEngineCore"
 		"src",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.spdlog}",
-		"%{IncludeDir.imgui}"
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.assimp}"
 	}
 
 	files {
@@ -41,7 +42,8 @@ project "TrashEngineCore"
 
 	links {
 		"GLFW",
-		"imgui"
+		"imgui",
+		"assimp"
 	}
 
 	filter "configurations:Debug"

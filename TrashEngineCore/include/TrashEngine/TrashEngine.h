@@ -15,3 +15,8 @@
 // component
 #include "scene/component/TransformComponent.h"
 #include "scene/component/StaticModelComponent.h"
+#include "scene/component/AnimatedModelComponent.h"
+#include "scene/component/AnimatedModelAnimatorComponent.h"
+
+// loader
+#include "loader/ModelLoader.h"
