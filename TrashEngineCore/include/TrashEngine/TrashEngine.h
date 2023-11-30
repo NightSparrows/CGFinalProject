@@ -12,3 +12,6 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 #include "scene/PointLight.h"
+// component
+#include "scene/component/TransformComponent.h"
+#include "scene/component/StaticModelComponent.h"

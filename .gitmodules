@@ -10,3 +10,6 @@
 [submodule "TrashEngineCore/vendor/imgui"]
 	path = TrashEngineCore/vendor/imgui
 	url = https://github.com/NightSparrows/imgui
+[submodule "TrashEngineCore/vendor/assimp"]
+	path = TrashEngineCore/vendor/assimp
+	url = https://github.com/NightSparrows/assimp

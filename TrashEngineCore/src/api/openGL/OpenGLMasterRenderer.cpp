@@ -90,6 +90,7 @@ namespace TrashEngine {
 
 	void OpenGLMasterRenderer::renderFrame(Camera* camera, Scene* scene)
 	{
+		GLuint nextSceneTexture;
 		Time time = Time::GetTime();
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -99,13 +100,14 @@ namespace TrashEngine {
 
 		this->prepareScene(scene);
 		this->renderScene(camera, this->m_renderSize, this->m_rawSceneTexture);
+		nextSceneTexture = this->m_rawSceneTexture;
 
 		// draw to screen
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, this->m_renderSize.x, this->m_renderSize.y);
 		this->m_simpleQuadProgram->bind();
 		glDisable(GL_DEPTH_TEST);
-		glBindTextureUnit(0, this->m_rawSceneTexture);
+		glBindTextureUnit(0, nextSceneTexture);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		// ImGUI end frame

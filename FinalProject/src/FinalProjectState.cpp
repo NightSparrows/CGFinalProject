@@ -89,18 +89,22 @@ void FinalProjectState::onInit()
 	lightCom2.attenuation.y = 0.09f;
 	lightCom2.attenuation.z = 0.032f;
 	lightCom2.attenuation.w = 20.f;
-	/*
-	for (uint32_t x = 0; x < 500; x ++) {
-		auto testLight = scene->createEntity("test light");
-		auto& lightCom3 = testLight.addComponent<TrashEngine::PointLight>();
-		lightCom3.position = glm::vec3((float)x / 5.f * 20.f - 10.f, -10, 2);
-		lightCom3.enabled = 1.f;
-		lightCom3.color = glm::vec3((float)x / 5.f, (float)x / 5.f, 0.5f);
-		lightCom3.attenuation.x = 1.f;
-		lightCom3.attenuation.y = 0.09f;
-		lightCom3.attenuation.z = 0.032f;
-		lightCom3.attenuation.w = 50.f;
-	}*/
+	
+	for (uint32_t y = 0; y < 20; y++) {
+		for (uint32_t x = 0; x < 20; x++) {
+			auto testLightEnt = scene->createEntity("testLight");
+			auto& lightC = testLightEnt.addComponent<TrashEngine::PointLight>();
+			lightC.position = glm::vec3((float)x * 5.f - 50.f, (float)y * 5.f - 50.f, 2);
+			lightC.enabled = 1.f;
+			lightC.color = glm::vec3((float)x / 20.f, y / 20.f, 0);
+			lightC.attenuation.x = 1.f;
+			lightC.attenuation.y = 0.09f;
+			lightC.attenuation.z = 0.032f;
+			lightC.attenuation.w = 20.f;
+
+		}
+	}
+
 
 }
 
@@ -111,6 +115,10 @@ void FinalProjectState::onUpdate(TrashEngine::Time delta)
 
 	light.position.x = sin(testTime) * 50.f;
 	testTime += delta;
+
+	//auto& entTransform = testEntity.getComponent<TrashEngine::TransformComponent>().transform;
+	
+	//entTransform.setRotation(glm::rotate(entTransform.getRotation(), delta * 1.f, glm::vec3(0, 1, 0)));
 
 	const float speed = 25.f;
 	glm::vec3 vector = glm::vec3(0);
