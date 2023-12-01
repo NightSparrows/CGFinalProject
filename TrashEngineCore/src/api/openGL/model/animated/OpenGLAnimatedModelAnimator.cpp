@@ -12,6 +12,15 @@ namespace TrashEngine {
 
 	void OpenGLAnimatedModelAnimator::update(Time delta)
 	{
+		if (this->m_targetAnimation.empty() && this->m_currentAnimation.empty())
+			return;
+
+		if (this->m_targetAnimation == this->m_currentAnimation) {
+			this->m_targetAnimation.clear();
+		}
+		for (glm::mat4& matrix : this->m_boneTransformations) {
+			matrix = glm::identity<glm::mat4>();
+		}
 		this->calculateBoneTransform(delta);
 	}
 
@@ -22,41 +31,84 @@ namespace TrashEngine {
 		state.currentTime = 0;
 		state.invert = false;
 		state.loop = true;
-		state.running = false;
 		state.speedFactor = 1.f;
 		this->m_animations[name] = state;
 	}
 
-	void OpenGLAnimatedModelAnimator::play(const std::string& name)
+	AnimatedModelAnimator::AnimationState* OpenGLAnimatedModelAnimator::getStateByName(const std::string& name)
+	{
+		auto it = this->m_animations.find(name);
+		if (it == this->m_animations.end()) {
+			NS_CORE_WARN("No animation called: {0}", name);
+			return nullptr;
+		}
+		auto& state = it->second;
+		return &state;
+	}
+
+	void OpenGLAnimatedModelAnimator::start(const std::string& name, float transitTime)
+	{
+		auto it = this->m_animations.find(name);
+		if (it == this->m_animations.end()) {
+			NS_CORE_WARN("No animation called: {0}", name);
+			return;
+		}
+		this->m_targetAnimation = name;
+		this->m_transitTime = transitTime;
+		this->m_currentTransitProgress = 0;
+		auto& state = it->second;
+		state.currentTime = 0;
+	}
+
+	void OpenGLAnimatedModelAnimator::setLooping(const std::string& name, bool looping)
+	{
+		auto it = this->m_animations.find(name);
+		if (it == this->m_animations.end()) {
+			NS_CORE_WARN("No animation called: {0}", name);
+			return;
+		}
+		auto& state = it->second;
+		state.loop = looping;
+	}
+
+	void OpenGLAnimatedModelAnimator::play(const std::string& name, float transitTime)
 	{
 		auto it = this->m_animations.find(name);
 		if (it == this->m_animations.end()) {
 			NS_CORE_WARN("No animation name: {0}", name);
 			return;
 		}
+		if (this->m_currentAnimation == name && this->m_targetAnimation != name) {		// the previous transition not done yet, reverse it
+			this->m_currentAnimation = this->m_targetAnimation;
+			this->m_targetAnimation = name;
+			this->m_currentTransitProgress = 1.f - this->m_currentTransitProgress;
+			this->m_transitTime = transitTime;
+			return;
+		}
+		else if (this->m_targetAnimation == name) {
+			return;
+		}
+		this->m_targetAnimation = name;
+		this->m_transitTime = transitTime;
+		this->m_currentTransitProgress = 0;
 		auto& state = it->second;
-		state.running = true;
+		state.currentTime = 0;
 	}
 
-	void OpenGLAnimatedModelAnimator::calculateBoneTransform(Time time)
+	void OpenGLAnimatedModelAnimator::calculateBoneTransform(Time deltaTime)
 	{
-		for (glm::mat4& matrix : this->m_boneTransformations) {
-			matrix = glm::identity<glm::mat4>();
-		}
 
 		std::map<std::string, glm::mat4> currentPose;
-		for (auto& [name, state] : this->m_animations) {
-			if (!state.running)
-				continue;
-
+		auto currentStateIt = this->m_animations.find(this->m_currentAnimation);
+		if (currentStateIt != this->m_animations.end()) {
+			auto& state = currentStateIt->second;
 			// dealing with time
 			if (state.invert) {
-				state.currentTime -= time.asSecond() * state.speedFactor;
+				state.currentTime -= deltaTime.asSecond() * state.speedFactor;
 				if (state.currentTime <= 0) {
 					if (!state.loop) {
-						state.running = false;
+						this->m_currentAnimation.clear();
 						state.currentTime = 0;
-						continue;
 					}
 					else {
 						state.currentTime = state.animation->getDuration() + state.currentTime;
@@ -64,13 +116,12 @@ namespace TrashEngine {
 				}
 			}
 			else {
-				state.currentTime += time.asSecond() * state.speedFactor;
+				state.currentTime += deltaTime.asSecond() * state.speedFactor;
 
 				if (state.currentTime >= state.animation->getDuration()) {
 					if (!state.loop) {
-						state.running = false;
+						this->m_currentAnimation.clear();
 						state.currentTime = 0;
-						continue;
 					}
 					else {
 						do {
@@ -80,7 +131,6 @@ namespace TrashEngine {
 				}
 			}
 			// end dealing with time
-
 			const auto& frames = state.animation->getKeyFrames();
 			auto previousFrame = frames[0];
 			auto nextFrame = frames[0];
@@ -96,17 +146,92 @@ namespace TrashEngine {
 
 
 			for (const auto& [boneName, boneTransform] : previousFrame->pose) {
-				
+
 				const auto& nextBoneTransform = nextFrame->pose.find(boneName)->second;
 				Transform transform = Transform::Interpolate(boneTransform, nextBoneTransform, progression);
-				transform = Transform::Interpolate(currentPose[boneName], transform, state.animatedFactor);
 				currentPose[boneName] = transform;
 			}
-
-			// calculate the current pose, apply to transformation matrices
-
 		}
-		this->applyPoseToBones(currentPose, this->m_model->getRootJoint(), glm::identity<glm::mat4>());
+
+		if (!this->m_targetAnimation.empty()) {
+			auto targetStateIt = this->m_animations.find(this->m_targetAnimation);
+			if (targetStateIt == this->m_animations.end()) {
+				NS_CORE_WARN("Target animation not found: {0}", this->m_targetAnimation);
+				return;
+			}
+			else {
+				std::map<std::string, glm::mat4> targetPose;
+				auto& targetState = targetStateIt->second;
+
+				// dealing with time
+				if (targetState.invert) {
+					targetState.currentTime -= deltaTime.asSecond() * targetState.speedFactor;
+					if (targetState.currentTime <= 0) {
+						if (!targetState.loop) {
+							this->m_targetAnimation.clear();
+							targetState.currentTime = 0;
+						}
+						else {
+							targetState.currentTime = targetState.animation->getDuration() + targetState.currentTime;
+						}
+					}
+				}
+				else {
+					targetState.currentTime += deltaTime.asSecond() * targetState.speedFactor;
+
+					if (targetState.currentTime >= targetState.animation->getDuration()) {
+						if (!targetState.loop) {
+							this->m_targetAnimation.clear();
+							targetState.currentTime = 0;
+						}
+						else {
+							do {
+								targetState.currentTime -= targetState.animation->getDuration();
+							} while (targetState.currentTime >= targetState.animation->getDuration());
+						}
+					}
+				}
+				// end dealing with time
+
+				const auto& frames = targetState.animation->getKeyFrames();
+				auto previousFrame = frames[0];
+				auto nextFrame = frames[0];
+				for (uint32_t i = 1; i < frames.size(); i++) {
+					nextFrame = frames[i];
+					if (nextFrame->timeStamp > targetState.currentTime)
+						break;
+					previousFrame = nextFrame;
+				}
+				float totalTime = nextFrame->timeStamp - previousFrame->timeStamp;
+				float currentTime = targetState.currentTime - previousFrame->timeStamp;
+				float progression = currentTime / totalTime;
+
+
+				for (const auto& [boneName, boneTransform] : previousFrame->pose) {
+
+					const auto& nextBoneTransform = nextFrame->pose.find(boneName)->second;
+					Transform transform = Transform::Interpolate(boneTransform, nextBoneTransform, progression);
+					targetPose[boneName] = transform;
+				}
+
+				for (auto& [boneName, boneTransform] : currentPose) {
+					auto& targetTransform = targetPose[boneName];
+					Transform transform = Transform::Interpolate(boneTransform, targetTransform, this->m_currentTransitProgress);
+					targetPose[boneName] = transform;
+				}
+				this->m_currentTransitProgress += (deltaTime / this->m_transitTime);
+				if (this->m_currentTransitProgress >= 1.f) {
+					this->m_currentAnimation = this->m_targetAnimation;
+					this->m_targetAnimation.clear();
+					this->m_currentTransitProgress = 0;
+					this->m_transitTime = 0;
+				}
+				applyPoseToBones(targetPose, this->m_model->getRootJoint(), glm::identity<glm::mat4>());
+			}
+		}
+		else {
+			this->applyPoseToBones(currentPose, this->m_model->getRootJoint(), glm::identity<glm::mat4>());
+		}
 	}
 
 	void OpenGLAnimatedModelAnimator::applyPoseToBones(const std::map<std::string, glm::mat4>& currentPose, Ref<const OpenGLAnimatedModelJoint> joint, const glm::mat4& parentTransform)

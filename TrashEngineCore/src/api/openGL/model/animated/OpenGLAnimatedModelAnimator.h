@@ -13,19 +13,6 @@ namespace TrashEngine {
 	class OpenGLAnimatedModelAnimator : public AnimatedModelAnimator
 	{
 	public:
-		struct AnimationState
-		{
-			Ref<AnimatedModelAnimation> animation;
-			float currentTime = 0;		// current time relative to animation time
-			bool running = false;		// is running, if running is false it pause
-			bool loop = false;
-			bool invert = false;
-			float speedFactor = 1.f;
-			float animatedFactor = 1.f;					// the animation factor of this [0, 1]
-			float animatedTransitFactor = 0.f;			// draw by time, modify the animated factor
-		};
-
-	public:
 		// takes in a loaded animated model, must be!!
 		OpenGLAnimatedModelAnimator(Ref<OpenGLAnimatedModel> model);
 
@@ -33,7 +20,13 @@ namespace TrashEngine {
 
 		void addAnimation(const std::string& name, Ref<AnimatedModelAnimation> animation) override;
 
-		void play(const std::string& name) override;
+		AnimationState* getStateByName(const std::string& name);
+
+		void start(const std::string& name, float transitTime = 0.5f);
+
+		void setLooping(const std::string& name, bool looping);
+
+		void play(const std::string& name, float transitTime) override;
 
 		void calculateBoneTransform(Time time);
 
@@ -48,6 +41,12 @@ namespace TrashEngine {
 		Ref<OpenGLAnimatedModel> m_model;
 
 		std::map<std::string, AnimationState> m_animations;
+
+		std::string m_currentAnimation;
+		std::string m_targetAnimation;
+
+		float m_currentTransitProgress;
+		float m_transitTime;
 
 		std::vector<glm::mat4> m_boneTransformations;
 

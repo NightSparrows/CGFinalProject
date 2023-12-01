@@ -3,6 +3,14 @@
 #include <TrashEngine/scene/component/StaticModelComponent.h>
 #include "FinalProjectState.h"
 
+TrashEngine::Ref<TrashEngine::MasterRenderer> masterRenderer;
+TrashEngine::Ref<TrashEngine::StaticModel> testModel;
+TrashEngine::Ref<TrashEngine::Scene> scene;
+TrashEngine::Entity testEntity;
+TrashEngine::Entity testEntity2;
+TrashEngine::Camera camera(1280.f / 720.f, glm::radians(70.f), 0.1f, 1000.f);
+TrashEngine::Entity testLightEntity;
+
 FinalProjectState::FinalProjectState(TrashEngine::GameEngine* engine) : 
 	GameState("finalState"), m_engine(engine)
 {
@@ -16,15 +24,20 @@ void FinalProjectState::onEvent(TrashEngine::Event& evnt)
 		this->m_engine->stop();
 		return true;
 		});
-}
+	dispatcher.dispatch<TrashEngine::KeyPressedEvent>([&](TrashEngine::KeyPressedEvent& event) {
+		if (event.key == TrashEngine::Key::H) {
 
-TrashEngine::Ref<TrashEngine::MasterRenderer> masterRenderer;
-TrashEngine::Ref<TrashEngine::StaticModel> testModel;
-TrashEngine::Ref<TrashEngine::Scene> scene;
-TrashEngine::Entity testEntity;
-TrashEngine::Entity testEntity2;
-TrashEngine::Camera camera(1280.f / 720.f, glm::radians(70.f), 0.1f, 1000.f);
-TrashEngine::Entity testLightEntity;
+			auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+			animatorCom.animator->play("walk", 0.5f);
+		}
+		else if (event.key == TrashEngine::Key::J) {
+
+			auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+			animatorCom.animator->play("idle", 0.5f);
+		}
+		return true;
+		});
+}
 
 void FinalProjectState::onInit()
 {
@@ -127,9 +140,8 @@ void FinalProjectState::onInit()
 	animatorCom.animator = this->m_engine->getGraphicsContext()->createAnimatedModelAnimator(modelC.model);
 	//animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/thinMatrixModel/model.dae"));
 	animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_walk.dae"));
-	animatorCom.animator->addAnimation("idle", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_hit.dae"));
-	animatorCom.animator->play("walk");
-	animatorCom.animator->play("idle");
+	animatorCom.animator->addAnimation("idle", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_idle.dae"));
+	animatorCom.animator->start("idle", 1.f);
 }
 
 float testTime = 0;
