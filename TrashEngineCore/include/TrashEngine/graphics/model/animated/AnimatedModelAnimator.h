@@ -23,7 +23,7 @@ namespace TrashEngine {
 
 		NS_API virtual AnimationState* getStateByName(const std::string& name) = 0;
 
-		NS_API virtual void play(const std::string& name, float transitTime) = 0;
+		NS_API virtual void play(const std::string& name, float transitTime, bool resetTime = true) = 0;
 
 		NS_API virtual void start(const std::string& name, float transitTime) = 0;
 

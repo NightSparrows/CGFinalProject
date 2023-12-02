@@ -3,6 +3,7 @@
 #include <TrashEngine/graphics/GraphicsContext.h>
 #include <deps/glad/glad.h>
 #include <core/GLFWRenderWindow.h>
+#include <api/openGL/renderer/normalMapGenerator/OpenGLNormalMapGenerator.h>
 
 /// <summary>
 /// Only include in core source code, not include explicitly
@@ -18,6 +19,8 @@ namespace TrashEngine {
 
 		Ref<AnimatedModel> createAnimatedModel() override;
 
+		Ref<Terrain> createTerrain(float heightIntensity, glm::ivec2 position) override;
+
 		Ref<AnimatedModelAnimator> createAnimatedModelAnimator(Ref<AnimatedModel> animatedModel) override;
 
 		Ref<MasterRenderer> createMasterRenderer(glm::ivec2 renderSize) override;
@@ -29,6 +32,9 @@ namespace TrashEngine {
 
 	private:
 		GLFWRenderWindow* m_window;
+
+		// 好醜，管他的
+		Scope<OpenGLNormalMapGenerator> m_normalMapGenerator;
 
 	};
 

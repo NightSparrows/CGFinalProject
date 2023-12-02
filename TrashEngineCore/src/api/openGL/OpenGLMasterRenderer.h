@@ -5,6 +5,7 @@
 #include "objects/OpenGLShaderProgram.h"
 #include "renderer/OpenGLStaticModelRenderer.h"
 #include "renderer/OpenGLAnimatedModelRenderer.h"
+#include "renderer/OpenGLTerrainRenderer.h"
 
 #define MAX_POINT_LIGHTS	20000
 // maximum global lights count in global light list
@@ -37,14 +38,13 @@ namespace TrashEngine {
 		{
 			glm::mat4 projectionMatrix;
 			glm::mat4 viewMatrix;
+			glm::vec4 position;		// blank for wired position effect
 			glm::mat4 inverseProjectionMatrix;
-			glm::vec4 position;		// blank for wired
 		};
 
 		struct DeferredPassFramebuffer
 		{
 			GLuint handle;
-			GLuint depthBufferTexture;
 			/*
 			* buffer 0:
 			*	position.x			position.y			position.z			normal.x
@@ -58,6 +58,14 @@ namespace TrashEngine {
 			*	 materialReflectivity diffuseColor.x diffuseColor.y diffuseColor.z
 			*/
 			GLuint gBuffers[5];
+		};
+
+		// after deferred use forward pass to do something not effect by the lighting
+		// use the global depth texture for previous depth buffering
+		// use the given draw texture for color attachment 0
+		struct ForwardPassFramebuffer
+		{
+			GLuint handle;
 		};
 
 	protected:
@@ -79,13 +87,30 @@ namespace TrashEngine {
 		GLuint m_globalUniformBuffer;
 		GLuint m_pointLightsStorageBuffer;
 
+		// the full render pass using depth buffer
+		// deferred and none deferred
+		GLuint m_depthBufferTexture;
+
+		// deferred pass for lighting calculation
 		DeferredPassFramebuffer m_deferredPassFramebuffer;
 		Scope<OpenGLShaderProgram> m_deferredCombineProgram;
+
+		// write directly to texture scene
+		// I want to use it by skybox particle sun ... etc
+		ForwardPassFramebuffer m_forwardPassFramebuffer;
+
+
+		// present to screen program
 		Scope<OpenGLShaderProgram> m_simpleQuadProgram;
+
+		// raw scene that not been post process
 		GLuint m_rawSceneTexture;
 
+		// renderers
 		Scope<OpenGLStaticModelRenderer> m_staticModelRenderer;
 		Scope<OpenGLAnimatedModelRenderer> m_animatedModelRenderer;
+		Scope<OpenGLTerrainRenderer> m_terrainRenderer;
+		// end renderers
 
 		//The variables that determine the size of the cluster grid. They're hand picked for now, but
 		//there is some space for optimization and tinkering as seen on the Olsson paper and the ID tech6

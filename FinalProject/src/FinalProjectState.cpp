@@ -8,7 +8,7 @@ TrashEngine::Ref<TrashEngine::StaticModel> testModel;
 TrashEngine::Ref<TrashEngine::Scene> scene;
 TrashEngine::Entity testEntity;
 TrashEngine::Entity testEntity2;
-TrashEngine::Camera camera(1280.f / 720.f, glm::radians(70.f), 0.1f, 1000.f);
+TrashEngine::Camera camera(1920.f / 1080.f, glm::radians(70.f), 0.1f, 5000.f);
 TrashEngine::Entity testLightEntity;
 
 FinalProjectState::FinalProjectState(TrashEngine::GameEngine* engine) : 
@@ -35,6 +35,11 @@ void FinalProjectState::onEvent(TrashEngine::Event& evnt)
 			auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
 			animatorCom.animator->play("idle", 0.5f);
 		}
+		else if (event.key == TrashEngine::Key::I) {
+
+			auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+			animatorCom.animator->play("attack", 0.5f);
+		}
 		return true;
 		});
 }
@@ -46,7 +51,10 @@ void FinalProjectState::onInit()
 
 	scene = TrashEngine::CreateRef<TrashEngine::Scene>();
 
-	masterRenderer = this->m_engine->getGraphicsContext()->createMasterRenderer(glm::ivec2(1280, 720));
+	masterRenderer = this->m_engine->getGraphicsContext()->createMasterRenderer(glm::ivec2(this->m_engine->getWindow()->getWidth(), this->m_engine->getWindow()->getHeight()));
+	
+	// test entity
+	/*
 	TrashEngine::Ref<TrashEngine::StaticModelData> modelData = TrashEngine::CreateRef<TrashEngine::StaticModelData>();
 	modelData->vertices.resize(4);
 	float size = 50.f;
@@ -79,7 +87,9 @@ void FinalProjectState::onInit()
 	modelData->meshes.resize(1);
 	modelData->meshes[0].indexCount = 6;
 	modelData->meshes[0].materialIndex = 0;
-
+	*/
+	/*
+	TrashEngine::Ref<TrashEngine::StaticModelData> modelData = TrashEngine::ModelLoader::LoadStaticModelFromFile("res/sponza/sponza.obj", "res/sponza");
 	testModel = this->m_engine->getGraphicsContext()->createStaticModel();
 	testModel->loadData(modelData.get());
 
@@ -87,7 +97,7 @@ void FinalProjectState::onInit()
 	auto& modelCom = testEntity.addComponent<TrashEngine::StaticModelComponent>();
 	modelCom.model = testModel;
 	testEntity.getComponent<TrashEngine::TransformComponent>().transform.setPosition(glm::vec3(0, 0, -10));
-
+	*/
 	testLightEntity = scene->createEntity("Light");
 	auto& lightCom = testLightEntity.addComponent<TrashEngine::PointLight>();
 	lightCom.position = glm::vec3(5, 5, 10);
@@ -109,9 +119,9 @@ void FinalProjectState::onInit()
 	lightCom2.attenuation.z = 0.032f;
 	lightCom2.attenuation.w = 20.f;
 	
-	/*
-	for (uint32_t y = 0; y < 20; y++) {
-		for (uint32_t x = 0; x < 20; x++) {
+	
+	for (uint32_t y = 0; y < 10; y++) {
+		for (uint32_t x = 0; x < 10; x++) {
 			auto testLightEnt = scene->createEntity("testLight");
 			auto& lightC = testLightEnt.addComponent<TrashEngine::PointLight>();
 			lightC.position = glm::vec3((float)x * 5.f - 50.f, (float)y * 5.f - 50.f, 2);
@@ -123,7 +133,7 @@ void FinalProjectState::onInit()
 			lightC.attenuation.w = 20.f;
 
 		}
-	}*/
+	}
 
 	testEntity2 = scene->createEntity("test entity2");
 
@@ -141,7 +151,15 @@ void FinalProjectState::onInit()
 	//animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/thinMatrixModel/model.dae"));
 	animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_walk.dae"));
 	animatorCom.animator->addAnimation("idle", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_idle.dae"));
+	animatorCom.animator->addAnimation("attack", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_attack.dae"));
 	animatorCom.animator->start("idle", 1.f);
+
+	// test terrain
+	auto testTerrainEntity = scene->createEntity("test Terrain");
+	auto& testTerrainCom = testTerrainEntity.addComponent<TrashEngine::TerrainComponent>();
+	testTerrainCom.terrain = this->m_engine->getGraphicsContext()->createTerrain(50, glm::ivec2(0, 0));
+	testTerrainCom.terrain->loadHeightMap("res/terrain/heightMap.png");
+
 }
 
 float testTime = 0;
@@ -181,6 +199,15 @@ void FinalProjectState::onUpdate(TrashEngine::Time delta)
 	}
 	vector = camera.rotation * vector;
 	camera.position += vector * delta.asSecond();
+	if (this->m_engine->getMouse()->isButtonDown(TrashEngine::MouseButton::Left)) {
+		auto mouseDelta = -this->m_engine->getMouse()->getDelta();
+
+		glm::quat rx(glm::angleAxis(0.005f * mouseDelta.x, glm::vec3(0, 1, 0)));
+		glm::quat ry(glm::angleAxis(0.005f * mouseDelta.y, glm::vec3(1, 0, 0)));
+
+		camera.rotation = rx * camera.rotation * ry;
+
+	}
 	camera.updateViewMatrix();
 }
 

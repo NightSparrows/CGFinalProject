@@ -3,6 +3,7 @@
 #include "Base.h"
 #include "RenderWindow.h"
 #include "Keyboard.h"
+#include "Mouse.h"
 #include <TrashEngine/graphics/GraphicsContext.h>
 #include "GameState.h"
 
@@ -27,9 +28,14 @@ namespace TrashEngine {
 
 		inline Keyboard* getKeyboard() { return this->m_keyboard.get(); }
 
+		inline Mouse* getMouse() { return this->m_mouse.get(); }
+
+		inline RenderWindow* getWindow() { return this->m_window.get(); }
+
 	protected:
 		Scope<RenderWindow> m_window;
 		Scope<Keyboard> m_keyboard;
+		Scope<Mouse> m_mouse;
 
 		Scope<GraphicsContext> m_context;
 

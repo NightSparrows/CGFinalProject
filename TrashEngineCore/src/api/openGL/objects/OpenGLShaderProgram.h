@@ -18,6 +18,14 @@ namespace TrashEngine {
 
 		GLint getUniformLocationFromName(const char* uniformName);
 
+		void loadFloat(const std::string& uniformName, float value);
+
+		void loadUInt(const std::string& uniformName, uint32_t value);
+
+		void loadInt(const std::string& uniformName, GLint value);
+
+		void loadIVec2(const std::string& uniformName, const glm::ivec2& value);
+
 		void load(GLint location, const glm::uvec2& value);
 
 		void load(GLint location, const glm::uvec4& value);
@@ -41,7 +49,12 @@ namespace TrashEngine {
 	protected:
 		OpenGLShaderProgram();
 
+		// get location from cache
+		GLint getUniformLocation(const std::string& uniformName);
+
 	protected:
+
+		std::map<std::string, GLint> m_locations;
 
 		GLuint m_programHandle;
 

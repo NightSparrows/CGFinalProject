@@ -27,6 +27,7 @@ namespace TrashEngine {
 			return false;
 		}
 		this->m_keyboard = CreateScope<Keyboard>(this->m_window.get());
+		this->m_mouse = CreateScope<Mouse>(this->m_window.get());
 
 		if (!static_cast<OpenGLGraphicsContext*>(this->m_context.get())->init(this->m_window.get())) {
 			NS_CORE_ERROR("Failed to initialize OpenGL context");

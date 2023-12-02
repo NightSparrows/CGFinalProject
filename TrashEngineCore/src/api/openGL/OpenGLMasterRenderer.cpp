@@ -16,15 +16,28 @@ namespace TrashEngine {
 	OpenGLMasterRenderer::OpenGLMasterRenderer(glm::ivec2 renderSize) :
 		m_renderSize(renderSize)
 	{
+		// setup depth buffer
+		glCreateTextures(GL_TEXTURE_2D, 1, &this->m_depthBufferTexture);
+		glTextureStorage2D(this->m_depthBufferTexture, 1, GL_DEPTH_COMPONENT32, this->m_renderSize.x, this->m_renderSize.y);
+		glTextureParameteri(this->m_depthBufferTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTextureParameteri(this->m_depthBufferTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		// end depth buffer creation
 
+		// create the deferred pass frame buffer
 		this->createDeferredPassFramebuffer();
+
+		// forward framebuffer creation
+		glCreateFramebuffers(1, &this->m_forwardPassFramebuffer.handle);
+
 		// Global uniform buffer (UBO)
 		glCreateBuffers(1, &this->m_globalUniformBuffer);
 		glNamedBufferData(this->m_globalUniformBuffer, sizeof(GlobalUBOData), nullptr, GL_DYNAMIC_DRAW);
-		//glNamedBufferStorage(this->m_globalUniformBuffer, sizeof(GlobalUBOData), nullptr, GL_MAP_WRITE_BIT);
 
+		// renderers init
 		this->m_staticModelRenderer = CreateScope<OpenGLStaticModelRenderer>();
 		this->m_animatedModelRenderer = CreateScope<OpenGLAnimatedModelRenderer>();
+		this->m_terrainRenderer = CreateScope<OpenGLTerrainRenderer>();
+		// end renderers init
 
 		OpenGLShaderProgramBuilder shaderBuilder;
 		shaderBuilder.addShaderFromFile("assets/TrashEngine/shaders/common/simpleQuad.vert", GL_VERTEX_SHADER);
@@ -87,6 +100,10 @@ namespace TrashEngine {
 		this->m_deferredCombineProgram.reset();
 		glDeleteBuffers(1, &this->m_globalUniformBuffer);
 		this->destroyDeferredPassFramebuffer();
+		// forward framebuffer destruction
+		glDeleteFramebuffers(1, &this->m_forwardPassFramebuffer.handle);
+		// destroy depth texture
+		glDeleteTextures(1, &this->m_depthBufferTexture);
 	}
 
 	void OpenGLMasterRenderer::renderFrame(Camera* camera, Scene* scene)
@@ -150,19 +167,18 @@ namespace TrashEngine {
 		// prepare Scene in renderers
 		this->m_staticModelRenderer->prepareScene(scene);
 		this->m_animatedModelRenderer->prepareScene(scene);
+		this->m_terrainRenderer->prepareScene(scene);
 	}
 
 	void OpenGLMasterRenderer::renderScene(Camera* camera, glm::ivec2 renderSize, GLuint drawTexture)
 	{
 		// camera information to camera buffer
-		void* globalUBOMap = glMapNamedBuffer(this->m_globalUniformBuffer, GL_WRITE_ONLY);
 		GlobalUBOData globalData{};
 		globalData.projectionMatrix = camera->getProjectionMatrix();
 		globalData.viewMatrix = camera->getViewMatrix();
 		globalData.inverseProjectionMatrix = glm::inverse(camera->getProjectionMatrix());
 		globalData.position = glm::vec4(camera->position, 0.f);
-		memcpy_s(globalUBOMap, sizeof(GlobalUBOData), &globalData, sizeof(GlobalUBOData));
-		glUnmapNamedBuffer(this->m_globalUniformBuffer);
+		glNamedBufferSubData(this->m_globalUniformBuffer, 0, sizeof(GlobalUBOData), &globalData);
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, this->m_globalUniformBuffer);
 
 		// start rendering on screen
@@ -176,6 +192,7 @@ namespace TrashEngine {
 		/// renderers draw
 		this->m_staticModelRenderer->render();
 		this->m_animatedModelRenderer->render();
+		this->m_terrainRenderer->render();
 		/// end renderers draw
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -210,36 +227,36 @@ namespace TrashEngine {
 		for (uint32_t i = 0; i < 5; i++) {
 			glBindImageTexture(i, this->m_deferredPassFramebuffer.gBuffers[i], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 		}
-		glBindTextureUnit(0, this->m_deferredPassFramebuffer.depthBufferTexture);
-		// You cant
+		// You cant bind depth texture using imageLoad but you can sample it (OpenGL)
 		//glBindImageTexture(5, this->m_deferredPassFramebuffer.depthBufferTexture, 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
+		glBindTextureUnit(0, this->m_depthBufferTexture);
+		// the output texture binding
 		glBindImageTexture(6, drawTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		glDispatchCompute((GLuint)ceil(renderSize.x / 32) + 1, (GLuint)ceil(renderSize.y / 32) + 1, 1);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		
 		// render non deferred object like skybox sun ... etc
+		glBindFramebuffer(GL_FRAMEBUFFER, this->m_forwardPassFramebuffer.handle);
+		glNamedFramebufferTexture(this->m_forwardPassFramebuffer.handle, GL_COLOR_ATTACHMENT0, drawTexture, 0);
+		// forward renderer drawing
+		/// TODO
+		/// end forward renderer drawing
 
 	}
 
 	void OpenGLMasterRenderer::createDeferredPassFramebuffer()
 	{
 		glCreateFramebuffers(1, &this->m_deferredPassFramebuffer.handle);
-		glCreateTextures(GL_TEXTURE_2D, 1, &this->m_deferredPassFramebuffer.depthBufferTexture);
 		glCreateTextures(GL_TEXTURE_2D, 5, this->m_deferredPassFramebuffer.gBuffers);
 
-		// setup depth buffer
-		glTextureStorage2D(this->m_deferredPassFramebuffer.depthBufferTexture, 1, GL_DEPTH_COMPONENT32, this->m_renderSize.x, this->m_renderSize.y);
-		glTextureParameteri(this->m_deferredPassFramebuffer.depthBufferTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(this->m_deferredPassFramebuffer.depthBufferTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-		glNamedFramebufferTexture(this->m_deferredPassFramebuffer.handle, GL_DEPTH_ATTACHMENT, this->m_deferredPassFramebuffer.depthBufferTexture, 0);
+		glNamedFramebufferTexture(this->m_deferredPassFramebuffer.handle, GL_DEPTH_ATTACHMENT, this->m_depthBufferTexture, 0);
 		
 
 		// color buffer setup
 		for (uint32_t i = 0; i < 5; i++) {
 			glTextureStorage2D(this->m_deferredPassFramebuffer.gBuffers[i], 1, GL_RGBA32F, this->m_renderSize.x, this->m_renderSize.y);
-			glTextureParameteri(this->m_deferredPassFramebuffer.depthBufferTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTextureParameteri(this->m_deferredPassFramebuffer.depthBufferTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTextureParameteri(this->m_deferredPassFramebuffer.gBuffers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTextureParameteri(this->m_deferredPassFramebuffer.gBuffers[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glNamedFramebufferTexture(this->m_deferredPassFramebuffer.handle, GL_COLOR_ATTACHMENT0 + i, this->m_deferredPassFramebuffer.gBuffers[i], 0);
 		}
 
@@ -257,7 +274,6 @@ namespace TrashEngine {
 	void OpenGLMasterRenderer::destroyDeferredPassFramebuffer()
 	{
 		glDeleteTextures(5, this->m_deferredPassFramebuffer.gBuffers);
-		glDeleteTextures(1, &this->m_deferredPassFramebuffer.depthBufferTexture);
 		glDeleteFramebuffers(1, &this->m_deferredPassFramebuffer.handle);
 	}
 

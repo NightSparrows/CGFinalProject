@@ -67,6 +67,9 @@ void main() {
 
 	vec3 diffuseColor;
 
+	if (texture(diffuseSampler, texCoord).a < 0.1)
+		discard;
+
 	if (hasDiffuseTexture > 0) {
 		diffuseColor = texture(diffuseSampler, texCoord).rgb;
 	} else {

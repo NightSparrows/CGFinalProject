@@ -71,12 +71,16 @@ namespace TrashEngine {
 		state.loop = looping;
 	}
 
-	void OpenGLAnimatedModelAnimator::play(const std::string& name, float transitTime)
+	void OpenGLAnimatedModelAnimator::play(const std::string& name, float transitTime, bool resetTime)
 	{
 		auto it = this->m_animations.find(name);
 		if (it == this->m_animations.end()) {
 			NS_CORE_WARN("No animation name: {0}", name);
 			return;
+		}
+		auto& state = it->second;
+		if (resetTime) {
+			state.currentTime = 0;
 		}
 		if (this->m_currentAnimation == name && this->m_targetAnimation != name) {		// the previous transition not done yet, reverse it
 			this->m_currentAnimation = this->m_targetAnimation;
@@ -91,8 +95,6 @@ namespace TrashEngine {
 		this->m_targetAnimation = name;
 		this->m_transitTime = transitTime;
 		this->m_currentTransitProgress = 0;
-		auto& state = it->second;
-		state.currentTime = 0;
 	}
 
 	void OpenGLAnimatedModelAnimator::calculateBoneTransform(Time deltaTime)

@@ -9,6 +9,7 @@
 
 #include "OpenGLStaticModel.h"
 #include "OpenGLMasterRenderer.h"
+#include "model/terrain/OpenGLTerrain.h"
 
 namespace TrashEngine {
     
@@ -20,6 +21,11 @@ namespace TrashEngine {
     Ref<AnimatedModel> OpenGLGraphicsContext::createAnimatedModel()
     {
         return CreateRef<OpenGLAnimatedModel>();
+    }
+
+    Ref<Terrain> OpenGLGraphicsContext::createTerrain(float heightIntensity, glm::ivec2 position)
+    {
+        return CreateRef<OpenGLTerrain>(this->m_normalMapGenerator.get(), heightIntensity, position);
     }
 
     Ref<AnimatedModelAnimator> OpenGLGraphicsContext::createAnimatedModelAnimator(Ref<AnimatedModel> animatedModel)
@@ -80,12 +86,16 @@ namespace TrashEngine {
         ImGui_ImplGlfw_InitForOpenGL(this->m_window->getHandle(), true);
         ImGui_ImplOpenGL3_Init("#version 450");
 
+        // normap map generator init
+        this->m_normalMapGenerator = CreateScope<OpenGLNormalMapGenerator>();
 
         return true;
     }
 
     void OpenGLGraphicsContext::cleanUp()
     {
+        this->m_normalMapGenerator.reset();
+
         ImGui_ImplOpenGL3_Shutdown();
         // TODO cleanUp
     }

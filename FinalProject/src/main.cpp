@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv)
 {
-	TrashEngine::GameEngine engine(1280, 720, "Computer Graphics Final Project");
+	TrashEngine::GameEngine engine(1920, 1080, "Computer Graphics Final Project");
 
 	engine.init();
 

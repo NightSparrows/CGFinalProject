@@ -26,7 +26,7 @@ namespace TrashEngine {
 
 		void setLooping(const std::string& name, bool looping);
 
-		void play(const std::string& name, float transitTime) override;
+		void play(const std::string& name, float transitTime, bool resetTime) override;
 
 		void calculateBoneTransform(Time time);
 

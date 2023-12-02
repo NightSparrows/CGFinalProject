@@ -18,6 +18,13 @@ namespace TrashEngine {
 		glDeleteTextures(1, &this->m_textureHandle);
 	}
 
+	void OpenGLTexture::emptyTexture(uint32_t width, uint32_t height, GLenum format)
+	{
+		glTextureStorage2D(this->m_textureHandle, 1, format, width, height);
+		this->m_width = width;
+		this->m_height = height;
+	}
+
 	bool OpenGLTexture::loadTexture2D(const std::string& filePath, const TextureConfig& config)
 	{
 
@@ -33,6 +40,8 @@ namespace TrashEngine {
 		glTextureStorage2D(this->m_textureHandle, 1, internalFormat, width, height);
 		glTextureSubImage2D(this->m_textureHandle, 0, 0, 0, width, height, dataFormat, GL_UNSIGNED_BYTE, data);
 		stbi_image_free(data);
+		this->m_width = (uint32_t)width;
+		this->m_height = (uint32_t)height;
 
 		glTextureParameteri(this->m_textureHandle, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(this->m_textureHandle, GL_TEXTURE_WRAP_T, GL_REPEAT);

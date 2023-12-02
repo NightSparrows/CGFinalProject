@@ -17,6 +17,7 @@
 #include "scene/component/StaticModelComponent.h"
 #include "scene/component/AnimatedModelComponent.h"
 #include "scene/component/AnimatedModelAnimatorComponent.h"
+#include "scene/component/TerrainComponent.h"
 
 // loader
 #include "loader/ModelLoader.h"

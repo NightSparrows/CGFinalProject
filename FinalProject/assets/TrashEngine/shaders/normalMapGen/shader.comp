@@ -1,0 +1,36 @@
+#version 460
+
+layout (binding = 0) uniform sampler2D u_heightMap;
+
+layout(binding = 1, rgba32f) uniform writeonly image2D normalMap;
+
+uniform uint u_N;
+uniform float u_strength;
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+void main() {
+	ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+	vec2 texCoord = gl_GlobalInvocationID.xy / float(u_N);
+	
+    float texelSize = 1.0 / u_N;
+
+    float z0 = texture(u_heightMap, texCoord + vec2(-texelSize, -texelSize)).r;
+    float z1 = texture(u_heightMap, texCoord + vec2(         0, -texelSize)).r;
+    float z2 = texture(u_heightMap, texCoord + vec2( texelSize, -texelSize)).r;
+    float z3 = texture(u_heightMap, texCoord + vec2(-texelSize,          0)).r;
+    float z4 = texture(u_heightMap, texCoord + vec2( texelSize,          0)).r;
+    float z5 = texture(u_heightMap, texCoord + vec2(-texelSize,  texelSize)).r;
+    float z6 = texture(u_heightMap, texCoord + vec2(         0,  texelSize)).r;
+    float z7 = texture(u_heightMap, texCoord + vec2( texelSize,  texelSize)).r;
+
+    vec3 normal = vec3(0);
+
+    normal.z = 1.0 / u_strength;
+    normal.x = z0 + 2 * z3 + z5 - z2 - 2 * z4 - z7;
+    normal.y = z0 + 2 * z1 + z2 - z5 - 2 * z6 - z7;
+
+    imageStore(normalMap, pos, vec4((normalize(normal) + 1) / 2.0, 1.0));
+	
+}
+
+

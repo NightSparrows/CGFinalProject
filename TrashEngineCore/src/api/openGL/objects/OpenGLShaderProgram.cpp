@@ -28,7 +28,37 @@ namespace TrashEngine {
 
 	GLint OpenGLShaderProgram::getUniformLocationFromName(const char* uniformName)
 	{
-		return glGetUniformLocation(this->m_programHandle, uniformName);
+		GLint location = glGetUniformLocation(this->m_programHandle, uniformName);
+
+		if (location != -1)
+			this->m_locations[uniformName] = location;
+
+		return location;
+	}
+
+	void OpenGLShaderProgram::loadFloat(const std::string& uniformName, float value)
+	{
+		this->load(this->getUniformLocation(uniformName), value);
+	}
+
+	void OpenGLShaderProgram::loadUInt(const std::string& uniformName, uint32_t value)
+	{
+		glProgramUniform1ui(this->m_programHandle, this->getUniformLocation(uniformName), value);
+	}
+
+	void OpenGLShaderProgram::loadInt(const std::string& uniformName, GLint value)
+	{
+		glProgramUniform1i(this->m_programHandle, this->getUniformLocation(uniformName), value);
+	}
+
+	void OpenGLShaderProgram::loadIVec2(const std::string& uniformName, const glm::ivec2& value)
+	{
+		glProgramUniform2iv(this->m_programHandle, this->getUniformLocation(uniformName), 1, glm::value_ptr(value));
+	}
+
+	GLint OpenGLShaderProgram::getUniformLocation(const std::string& uniformName)
+	{
+		return this->m_locations[uniformName];
 	}
 
 	void OpenGLShaderProgram::load(GLint location, const glm::uvec2& value)
