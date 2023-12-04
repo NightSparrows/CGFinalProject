@@ -8,6 +8,7 @@
 #include "renderer/OpenGLTerrainRenderer.h"
 
 #define MAX_POINT_LIGHTS	20000
+#define MAX_DIRECTION_LIGHTS	8
 // maximum global lights count in global light list
 #define MAX_GLOBAL_LIGHTS	20000
 
@@ -86,6 +87,7 @@ namespace TrashEngine {
 
 		GLuint m_globalUniformBuffer;
 		GLuint m_pointLightsStorageBuffer;
+		GLuint m_directionLightsStorageBuffer;
 
 		// the full render pass using depth buffer
 		// deferred and none deferred

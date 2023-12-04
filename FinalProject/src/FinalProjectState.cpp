@@ -160,6 +160,11 @@ void FinalProjectState::onInit()
 	testTerrainCom.terrain = this->m_engine->getGraphicsContext()->createTerrain(50, glm::ivec2(0, 0));
 	testTerrainCom.terrain->loadHeightMap("res/terrain/heightMap.png");
 
+	// test direction light
+	auto testDirLightEntity = scene->createEntity("test dir light");
+	auto& testDirLight = testDirLightEntity.addComponent<TrashEngine::DirectionLight>();
+	testDirLight.color = glm::vec3(1, 1, 1);
+	testDirLight.direction = glm::vec3(-0.5, -0.5, -0.5);
 }
 
 float testTime = 0;

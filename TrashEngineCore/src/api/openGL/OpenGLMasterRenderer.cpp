@@ -7,6 +7,7 @@
 #include <deps/glad/glad.h>
 #include <TrashEngine/core/Time.h>
 #include <TrashEngine/scene/PointLight.h>
+#include <TrashEngine/scene/DirectionLight.h>
 
 #include "builder/OpenGLShaderProgramBuilder.h"
 #include "OpenGLMasterRenderer.h"
@@ -58,6 +59,10 @@ namespace TrashEngine {
 		glCreateBuffers(1, &this->m_pointLightsStorageBuffer);
 		glNamedBufferStorage(this->m_pointLightsStorageBuffer, 4 * sizeof(uint32_t) + sizeof(PointLight) * MAX_POINT_LIGHTS, nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
+		// direction light creation
+		glCreateBuffers(1, &this->m_directionLightsStorageBuffer);
+		glNamedBufferStorage(this->m_directionLightsStorageBuffer, 4 * sizeof(uint32_t) + sizeof(DirectionLight) * MAX_DIRECTION_LIGHTS, nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+
 		shaderBuilder.addShaderFromFile("assets/TrashEngine/shaders/deferredShading/clusterCalc.comp", GL_COMPUTE_SHADER);
 		this->m_clusterCalcProgram = Scope<OpenGLShaderProgram>(shaderBuilder.build());
 		shaderBuilder.clear();
@@ -93,6 +98,7 @@ namespace TrashEngine {
 
 		this->m_clusterCalcProgram.reset();
 
+		glDeleteBuffers(1, &this->m_directionLightsStorageBuffer);
 		glDeleteBuffers(1, &this->m_pointLightsStorageBuffer);
 
 		glDeleteTextures(1, &this->m_rawSceneTexture);
@@ -164,6 +170,18 @@ namespace TrashEngine {
 		glNamedBufferSubData(this->m_pointLightsStorageBuffer, 0, sizeof(uint32_t), &numberOfPointLights);
 		glNamedBufferSubData(this->m_pointLightsStorageBuffer, 4 * sizeof(uint32_t), numberOfPointLights * sizeof(PointLight), pointLights.data());
 
+		// direction light
+		auto dirView = scene->Reg().view<DirectionLight>();
+		std::vector<DirectionLight> directionLights;
+		for (auto [entity, light] : dirView.each()) {
+			directionLights.emplace_back(light);
+			if (directionLights.size() >= MAX_DIRECTION_LIGHTS)
+				break;
+		}
+		uint32_t numberOfDirectionLight = (uint32_t)directionLights.size();
+		glNamedBufferSubData(this->m_directionLightsStorageBuffer, 0, sizeof(uint32_t), &numberOfDirectionLight);
+		glNamedBufferSubData(this->m_directionLightsStorageBuffer, 4 * sizeof(uint32_t), numberOfDirectionLight * sizeof(DirectionLight), directionLights.data());
+
 		// prepare Scene in renderers
 		this->m_staticModelRenderer->prepareScene(scene);
 		this->m_animatedModelRenderer->prepareScene(scene);
@@ -198,6 +216,7 @@ namespace TrashEngine {
 
 		// point light buffer binding
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, this->m_pointLightsStorageBuffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, this->m_directionLightsStorageBuffer);
 
 		// clusterd size calculation
 		// need to call when camera projection matrix has changed, but I just calc once in my case
@@ -237,6 +256,7 @@ namespace TrashEngine {
 		
 		// render non deferred object like skybox sun ... etc
 		glBindFramebuffer(GL_FRAMEBUFFER, this->m_forwardPassFramebuffer.handle);
+		glNamedFramebufferTexture(this->m_forwardPassFramebuffer.handle, GL_DEPTH_ATTACHMENT, this->m_depthBufferTexture, 0);
 		glNamedFramebufferTexture(this->m_forwardPassFramebuffer.handle, GL_COLOR_ATTACHMENT0, drawTexture, 0);
 		// forward renderer drawing
 		/// TODO

@@ -14,6 +14,7 @@ namespace TrashEngine {
 		virtual bool loadHeightMap(const std::string& filePath) = 0;
 
 
+
 	};
 
 }

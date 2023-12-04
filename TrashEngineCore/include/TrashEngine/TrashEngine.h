@@ -11,8 +11,9 @@
 // scene
 #include "scene/Scene.h"
 #include "scene/Entity.h"
-#include "scene/PointLight.h"
 // component
+#include "scene/PointLight.h"
+#include "scene/DirectionLight.h"
 #include "scene/component/TransformComponent.h"
 #include "scene/component/StaticModelComponent.h"
 #include "scene/component/AnimatedModelComponent.h"

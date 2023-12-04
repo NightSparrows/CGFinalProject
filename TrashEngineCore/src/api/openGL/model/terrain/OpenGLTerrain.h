@@ -2,6 +2,7 @@
 
 #include <TrashEngine/graphics/model/terrain/Terrain.h>
 #include <api/openGL/renderer/normalMapGenerator/OpenGLNormalMapGenerator.h>
+#include <api/openGL/OpenGLMaterial.h>
 
 namespace TrashEngine {
 
@@ -29,6 +30,8 @@ namespace TrashEngine {
 
 		Scope<OpenGLTexture> m_heightMapTexture;
 		Scope<OpenGLTexture> m_normalMapTexture;
+
+		Scope<OpenGLTexture> m_blendMapTexture;
 
 	};
 

@@ -99,7 +99,7 @@ namespace TrashEngine {
 		glPatchParameteri(GL_PATCH_VERTICES, 4);
 		glBindVertexArray(this->m_meshVaoHandle);
 		// for each terrain
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		for (auto terrain : this->m_terrains) {
 			// bind terrain textures (normal map, height map, blend map, terrain textures)
 			terrain->getHeightMapTexture()->bindUnit(0);
@@ -108,7 +108,7 @@ namespace TrashEngine {
 			this->m_shader->loadIVec2("u_position", terrain->getPosition());
 			glDrawElements(GL_PATCHES, this->m_indicesCount, GL_UNSIGNED_INT, 0);
 		}
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 }

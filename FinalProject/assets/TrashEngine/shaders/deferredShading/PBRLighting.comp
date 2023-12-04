@@ -23,14 +23,25 @@ struct PointLight {
 	vec4 attenuation;	// attenuation.w = radius
 };
 
-struct LightGrid {
-	uint offset;
-	uint count;
-};
-
 layout (std430, binding = 1) buffer pointLightBuffer {
 	uvec4 numberOfPointLights;			// just in x
 	PointLight pointLights[];
+};
+
+struct DirectionLight {
+	vec4 direction;		// dir(x, y, z), enable
+	vec4 color;
+};
+
+layout (std430, binding = 2) buffer directionLightBuffer {
+	uvec4 numberOfDirectionLights;			// just in x
+	DirectionLight directionLights[];
+};
+
+/*
+struct LightGrid {
+	uint offset;
+	uint count;
 };
 
 layout (std430, binding = 3) buffer lightIndexBuffer {
@@ -41,14 +52,24 @@ layout (std430, binding = 4) buffer lightGridBuffer {
 	LightGrid lightGrid[];
 };
 
+float linearDepth(float depthSample);
+
+float linearDepth(float depthSample){
+    float depthRange = 2.0 * depthSample - 1.0;
+    //float depthRange = depthSample;
+    // Near... Far... wherever you are...
+    float linear = 2.0 * zNear * zFar / (zFar + zNear - depthRange * (zFar - zNear));
+    return linear;
+}
+
+
+*/
 const uint gridSizeX = 16;
 const uint gridSizeY = 9;
 const uint gridSizeZ = 24;
 const float zNear = 0.1f;
 const float zFar = 1000f;
 const uint sizeX = uint(ceil(1280.0 / float(gridSizeX)));
-
-float linearDepth(float depthSample);
 
 struct Material {
 	vec3 ambient;
@@ -58,12 +79,11 @@ struct Material {
 	float reflectivity;
 };
 
-vec3 calcPointLight(PointLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragNormal, Material material) {
-	
+vec3 calcDirectionLight(DirectionLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragNormal, Material material) {
 	vec3 totalLightColor = vec3(0.0);
 	
-	vec3 lightToPosVector = light.position.xyz - FragPos;
-	vec3 unitLightVector = normalize(lightToPosVector);
+	vec3 toLightVector = -light.direction.xyz;
+	vec3 unitLightVector = normalize(toLightVector);
 	
 	// ambient
 	totalLightColor += light.color.xyz * material.ambient;
@@ -72,7 +92,38 @@ vec3 calcPointLight(PointLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragN
 	float nDotl = dot(FragNormal, unitLightVector);
 	
 	if (nDotl > 0.0) {
-		float lightDistance = length(lightToPosVector);
+		vec3 lightColor = nDotl * light.color.xyz;
+		
+		totalLightColor += lightColor * material.diffuse;
+	}
+	
+	// specular
+	vec3 specularReflection = reflect(-unitLightVector, FragNormal);
+	float reflection = dot(specularReflection, unitViewDir);
+	
+	if (reflection > 0) {
+		vec3 specularColor = light.color.xyz * material.specular * pow(reflection, material.shininess) * material.reflectivity;
+		totalLightColor += specularColor;
+	}
+	
+	return totalLightColor;
+}
+
+vec3 calcPointLight(PointLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragNormal, Material material) {
+	
+	vec3 totalLightColor = vec3(0.0);
+	
+	vec3 toLightVector = light.position.xyz - FragPos;
+	vec3 unitLightVector = normalize(toLightVector);
+	
+	// ambient
+	totalLightColor += light.color.xyz * material.ambient;
+	
+	// diffuse
+	float nDotl = dot(FragNormal, unitLightVector);
+	
+	if (nDotl > 0.0) {
+		float lightDistance = length(toLightVector);
 		
 		vec3 lightColor = nDotl * light.color.xyz;
 		
@@ -113,25 +164,22 @@ void main() {
 	// bias    = -((float)gridSizeZ * std::log2f(zNear) / std::log2f(zFar / zNear)) ;
 	// for fast purpose I use const variable
 	vec2 texCoord = vec2(pixel_coords.x / 1280.0, pixel_coords.y / 720.0);
-	float currentDepth = texture(depthImage, texCoord).r;
-	float w = -1.0 / GlobalUbo.projectionMatrix[2][3];
-	currentDepth = currentDepth * w;
+	
+	//float currentDepth = texture(depthImage, texCoord).r;
+	//float w = -1.0 / GlobalUbo.projectionMatrix[2][3];
+	//currentDepth = currentDepth * w;
 	
 	
-	float scale = float(gridSizeZ) / log2(zFar / zNear);
-	float bias = -(float(gridSizeZ) * log2(zNear) / log2(zFar / zNear));
-	uint zTile = uint(max(log2(linearDepth(currentDepth))/* * scale * bias*/, 0.0));
-	//uint zTile = uint(max(log2(currentDepth * (zFar - zNear)), 0.0));
+	//float scale = float(gridSizeZ) / log2(zFar / zNear);
+	//float bias = -(float(gridSizeZ) * log2(zNear) / log2(zFar / zNear));
+	//uint zTile = uint(max(log2(linearDepth(currentDepth))/* * scale * bias*/, 0.0));
+	////uint zTile = uint(max(log2(currentDepth * (zFar - zNear)), 0.0));
 	
-	if (zTile > 24) {
-		//debug_Color.rg = vec2(1.0);
-	}
-	
-	//uint zTile = uint(max(log2(currentDepth) * scale * bias, 0.0));
-	ivec3 clusterVector = ivec3(pixel_coords.xy / sizeX, zTile);
-	uint clusterIndex = clusterVector.x +
-						gridSizeX * clusterVector.y +
-						(gridSizeX * gridSizeY) * clusterVector.z;
+	////uint zTile = uint(max(log2(currentDepth) * scale * bias, 0.0));
+	//ivec3 clusterVector = ivec3(pixel_coords.xy / sizeX, zTile);
+	//uint clusterIndex = clusterVector.x +
+	//					gridSizeX * clusterVector.y +
+	//					(gridSizeX * gridSizeY) * clusterVector.z;
 	// 我懷疑clusterIndex計算有問題
 
 	
@@ -158,8 +206,8 @@ void main() {
 	vec4 out_Color = vec4(0, 0, 0, 1);
 	
 	if (diffuseColor.x > 0 || diffuseColor.y > 0 || diffuseColor.z > 0) {
-		uint pointLightCount = lightGrid[clusterIndex].count;
-		uint pointLightOffset = lightGrid[clusterIndex].offset;
+		//uint pointLightCount = lightGrid[clusterIndex].count;
+		//uint pointLightOffset = lightGrid[clusterIndex].offset;
 		
 		vec3 totalLightColor = vec3(0.0);
 		/*
@@ -176,6 +224,11 @@ void main() {
 		// 先使用純deferred shading 因為沒時間研究
 		for(uint i = 0; i < numberOfPointLights.x; i++) {
 			totalLightColor += calcPointLight(pointLights[i], unitViewDir, fragPosition, normal, material);
+		}
+		
+		// direction light (not effect by attenuation)
+		for(uint i = 0; i < numberOfDirectionLights.x; i++) {
+			totalLightColor += calcDirectionLight(directionLights[i], unitViewDir, fragPosition, normal, material);
 		}
 		
 		totalLightColor = max(totalLightColor, 0.1);
@@ -195,12 +248,3 @@ void main() {
 	
 	
 }
-
-float linearDepth(float depthSample){
-    float depthRange = 2.0 * depthSample - 1.0;
-    //float depthRange = depthSample;
-    // Near... Far... wherever you are...
-    float linear = 2.0 * zNear * zFar / (zFar + zNear - depthRange * (zFar - zNear));
-    return linear;
-}
-

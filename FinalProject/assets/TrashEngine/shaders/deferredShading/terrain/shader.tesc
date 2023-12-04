@@ -13,9 +13,9 @@ layout (vertices = 4) out;
 layout(location = 0) out vec2 out_texCoords[];
 
 
-const int tessellationFactor = 600;
-const float tessellationSlope = 1.8;
-const float tessellationShift = 0.3;
+const int tessellationFactor = 5;
+const float tessellationSlope = 0.5;
+const float tessellationShift = 0.0;
 
 float LodFactor(float dist) {
 	
