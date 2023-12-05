@@ -40,6 +40,11 @@ void FinalProjectState::onEvent(TrashEngine::Event& evnt)
 			auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
 			animatorCom.animator->play("attack", 0.5f);
 		}
+		else if (event.key == TrashEngine::Key::O) {
+
+			auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+			animatorCom.animator->play("death", 0.5f);
+		}
 		return true;
 		});
 }
@@ -102,7 +107,7 @@ void FinalProjectState::onInit()
 	auto& lightCom = testLightEntity.addComponent<TrashEngine::PointLight>();
 	lightCom.position = glm::vec3(5, 5, 10);
 	lightCom.enabled = 1.f;
-	lightCom.color = glm::vec3(5.f, 5.f, 5.f);
+	lightCom.color = glm::vec3(1.3f, 1.3f, 1.3f);
 	lightCom.attenuation.x = 1.f;
 	lightCom.attenuation.y = 0.009f;
 	lightCom.attenuation.z = 0.0032f;
@@ -152,6 +157,8 @@ void FinalProjectState::onInit()
 	animatorCom.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_walk.dae"));
 	animatorCom.animator->addAnimation("idle", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_idle.dae"));
 	animatorCom.animator->addAnimation("attack", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_attack.dae"));
+	animatorCom.animator->addAnimation("death", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_death.dae"));
+	animatorCom.animator->setLooping("death", false);
 	animatorCom.animator->start("idle", 1.f);
 
 	// test terrain
@@ -163,7 +170,7 @@ void FinalProjectState::onInit()
 	// test direction light
 	auto testDirLightEntity = scene->createEntity("test dir light");
 	auto& testDirLight = testDirLightEntity.addComponent<TrashEngine::DirectionLight>();
-	testDirLight.color = glm::vec3(1, 1, 1);
+	testDirLight.color = glm::vec3(1.3, 1.3, 1.3);
 	testDirLight.direction = glm::vec3(-0.5, -0.5, -0.5);
 }
 

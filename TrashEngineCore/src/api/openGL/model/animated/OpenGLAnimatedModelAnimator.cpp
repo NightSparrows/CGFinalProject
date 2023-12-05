@@ -18,9 +18,6 @@ namespace TrashEngine {
 		if (this->m_targetAnimation == this->m_currentAnimation) {
 			this->m_targetAnimation.clear();
 		}
-		for (glm::mat4& matrix : this->m_boneTransformations) {
-			matrix = glm::identity<glm::mat4>();
-		}
 		this->calculateBoneTransform(delta);
 	}
 
@@ -58,6 +55,7 @@ namespace TrashEngine {
 		this->m_currentTransitProgress = 0;
 		auto& state = it->second;
 		state.currentTime = 0;
+		state.running = true;
 	}
 
 	void OpenGLAnimatedModelAnimator::setLooping(const std::string& name, bool looping)
@@ -78,10 +76,6 @@ namespace TrashEngine {
 			NS_CORE_WARN("No animation name: {0}", name);
 			return;
 		}
-		auto& state = it->second;
-		if (resetTime) {
-			state.currentTime = 0;
-		}
 		if (this->m_currentAnimation == name && this->m_targetAnimation != name) {		// the previous transition not done yet, reverse it
 			this->m_currentAnimation = this->m_targetAnimation;
 			this->m_targetAnimation = name;
@@ -91,6 +85,11 @@ namespace TrashEngine {
 		}
 		else if (this->m_targetAnimation == name) {
 			return;
+		}
+		auto& state = it->second;
+		state.running = true;
+		if (resetTime) {
+			state.currentTime = 0;
 		}
 		this->m_targetAnimation = name;
 		this->m_transitTime = transitTime;
@@ -105,30 +104,32 @@ namespace TrashEngine {
 		if (currentStateIt != this->m_animations.end()) {
 			auto& state = currentStateIt->second;
 			// dealing with time
-			if (state.invert) {
-				state.currentTime -= deltaTime.asSecond() * state.speedFactor;
-				if (state.currentTime <= 0) {
-					if (!state.loop) {
-						this->m_currentAnimation.clear();
-						state.currentTime = 0;
-					}
-					else {
-						state.currentTime = state.animation->getDuration() + state.currentTime;
+			if (state.running) {
+				if (state.invert) {
+					state.currentTime -= deltaTime.asSecond() * state.speedFactor;
+					if (state.currentTime <= 0) {
+						if (!state.loop) {
+							state.currentTime = 0.001f;
+							state.running = false;
+						}
+						else {
+							state.currentTime = state.animation->getDuration() + state.currentTime;
+						}
 					}
 				}
-			}
-			else {
-				state.currentTime += deltaTime.asSecond() * state.speedFactor;
+				else {
+					state.currentTime += deltaTime.asSecond() * state.speedFactor;
 
-				if (state.currentTime >= state.animation->getDuration()) {
-					if (!state.loop) {
-						this->m_currentAnimation.clear();
-						state.currentTime = 0;
-					}
-					else {
-						do {
-							state.currentTime -= state.animation->getDuration();
-						} while (state.currentTime >= state.animation->getDuration());
+					if (state.currentTime >= state.animation->getDuration()) {
+						if (!state.loop) {
+							state.currentTime = state.animation->getDuration() - 0.001f;
+							state.running = false;
+						}
+						else {
+							do {
+								state.currentTime -= state.animation->getDuration();
+							} while (state.currentTime >= state.animation->getDuration());
+						}
 					}
 				}
 			}
@@ -166,30 +167,32 @@ namespace TrashEngine {
 				auto& targetState = targetStateIt->second;
 
 				// dealing with time
-				if (targetState.invert) {
-					targetState.currentTime -= deltaTime.asSecond() * targetState.speedFactor;
-					if (targetState.currentTime <= 0) {
-						if (!targetState.loop) {
-							this->m_targetAnimation.clear();
-							targetState.currentTime = 0;
-						}
-						else {
-							targetState.currentTime = targetState.animation->getDuration() + targetState.currentTime;
+				if (targetState.running) {
+					if (targetState.invert) {
+						targetState.currentTime -= deltaTime.asSecond() * targetState.speedFactor;
+						if (targetState.currentTime <= 0) {
+							if (!targetState.loop) {
+								targetState.running = false;
+								targetState.currentTime = 0.001f;
+							}
+							else {
+								targetState.currentTime = targetState.animation->getDuration() + targetState.currentTime;
+							}
 						}
 					}
-				}
-				else {
-					targetState.currentTime += deltaTime.asSecond() * targetState.speedFactor;
+					else {
+						targetState.currentTime += deltaTime.asSecond() * targetState.speedFactor;
 
-					if (targetState.currentTime >= targetState.animation->getDuration()) {
-						if (!targetState.loop) {
-							this->m_targetAnimation.clear();
-							targetState.currentTime = 0;
-						}
-						else {
-							do {
-								targetState.currentTime -= targetState.animation->getDuration();
-							} while (targetState.currentTime >= targetState.animation->getDuration());
+						if (targetState.currentTime >= targetState.animation->getDuration()) {
+							if (!targetState.loop) {
+								targetState.running = false;
+								targetState.currentTime = targetState.animation->getDuration() - 0.001f;
+							}
+							else {
+								do {
+									targetState.currentTime -= targetState.animation->getDuration();
+								} while (targetState.currentTime >= targetState.animation->getDuration());
+							}
 						}
 					}
 				}

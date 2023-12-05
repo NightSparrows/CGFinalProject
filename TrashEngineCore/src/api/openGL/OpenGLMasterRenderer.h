@@ -6,6 +6,8 @@
 #include "renderer/OpenGLStaticModelRenderer.h"
 #include "renderer/OpenGLAnimatedModelRenderer.h"
 #include "renderer/OpenGLTerrainRenderer.h"
+#include "postProcessing/bloom/OpenGLBloomPass.h"
+#include "postProcessing/colorCorrect/OpenGLColorCorrectPass.h"
 
 #define MAX_POINT_LIGHTS	20000
 #define MAX_DIRECTION_LIGHTS	8
@@ -101,6 +103,9 @@ namespace TrashEngine {
 		// I want to use it by skybox particle sun ... etc
 		ForwardPassFramebuffer m_forwardPassFramebuffer;
 
+		Scope<OpenGLBloomPass> m_bloomPass;
+
+		Scope<OpenGLColorCorrectPass> m_colorCorrectPass;
 
 		// present to screen program
 		Scope<OpenGLShaderProgram> m_simpleQuadProgram;

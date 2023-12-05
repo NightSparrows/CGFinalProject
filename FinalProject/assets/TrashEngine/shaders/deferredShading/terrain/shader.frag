@@ -20,7 +20,7 @@ void main() {
 	vec3 materialSpecular = vec3(0);
 	float shininess = 0;
 	float reflectivity = 0;
-	vec3 diffuseColor = vec3(0, 1, 0);		// for testing
+	vec3 diffuseColor = vec3(1, 1, 1);		// for testing
 	
 	out_GBuffer0 = vec4(in_position.xyz, fragNormal.x);
 	out_GBuffer1 = vec4(fragNormal.yz, materialAmbient.xy);

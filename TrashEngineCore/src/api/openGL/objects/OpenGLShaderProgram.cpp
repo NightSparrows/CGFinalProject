@@ -32,6 +32,8 @@ namespace TrashEngine {
 
 		if (location != -1)
 			this->m_locations[uniformName] = location;
+		else
+			NS_CORE_ERROR("location name: {} not found", uniformName);
 
 		return location;
 	}

@@ -50,7 +50,7 @@ namespace TrashEngine {
 		shaderBuilder.addShaderFromFile("assets/TrashEngine/shaders/deferredShading/PBRLighting.comp", GL_COMPUTE_SHADER);
 		this->m_deferredCombineProgram = Scope<OpenGLShaderProgram>(shaderBuilder.build());
 		shaderBuilder.clear();
-		
+
 		// raw scene texture
 		glCreateTextures(GL_TEXTURE_2D, 1, &this->m_rawSceneTexture);
 		glTextureStorage2D(this->m_rawSceneTexture, 1, GL_RGBA32F, this->m_renderSize.x, this->m_renderSize.y);
@@ -83,10 +83,16 @@ namespace TrashEngine {
 		this->m_clusterLightCullProgram = Scope<OpenGLShaderProgram>(shaderBuilder.build());
 		shaderBuilder.clear();
 
+		// bloom pass creation
+		this->m_bloomPass = CreateScope<OpenGLBloomPass>(renderSize);
+		this->m_colorCorrectPass = CreateScope<OpenGLColorCorrectPass>(renderSize);
 	}
 
 	OpenGLMasterRenderer::~OpenGLMasterRenderer()
 	{
+		this->m_colorCorrectPass.reset();
+		this->m_bloomPass.reset();
+
 		this->m_clusterLightCullProgram.reset();
 		GLuint lightCalcBuffers[4] = {
 			this->m_clusterAABBBuffer,
@@ -125,6 +131,9 @@ namespace TrashEngine {
 		this->prepareScene(scene);
 		this->renderScene(camera, this->m_renderSize, this->m_rawSceneTexture);
 		nextSceneTexture = this->m_rawSceneTexture;
+
+		nextSceneTexture = this->m_bloomPass->renderBloom(nextSceneTexture);
+		nextSceneTexture = this->m_colorCorrectPass->renderPass(nextSceneTexture);
 
 		// draw to screen
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -212,7 +221,7 @@ namespace TrashEngine {
 		this->m_animatedModelRenderer->render();
 		this->m_terrainRenderer->render();
 		/// end renderers draw
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// point light buffer binding
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, this->m_pointLightsStorageBuffer);

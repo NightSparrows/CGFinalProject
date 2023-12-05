@@ -1,0 +1,30 @@
+#version 450
+
+layout(location = 0) uniform sampler2D u_originTextureSampler;
+
+uniform ivec2 u_imageSize;
+layout(location = 1) uniform writeonly image2D u_toImage;
+
+// above this will add to texture
+uniform float u_threshold;
+
+// dispatch(toImage.width / 32, toImage.height / 32, 1)
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+void main() {
+
+	
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	vec2 texCoord = vec2(pixel_coords) / vec2(u_imageSize);
+	
+	vec4 textureColor = texture(u_originTextureSampler, texCoord);
+
+	if (textureColor.r < u_threshold)
+		textureColor.r = 0;
+	if (textureColor.g < u_threshold)
+		textureColor.g = 0;
+	if (textureColor.b < u_threshold)
+		textureColor.b = 0;
+	
+	imageStore(u_toImage, pixel_coords, textureColor);
+
+}
