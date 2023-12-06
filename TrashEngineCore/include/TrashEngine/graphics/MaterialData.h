@@ -14,11 +14,16 @@ namespace TrashEngine {
 
 		std::string normalTexture;
 
-		glm::vec3 ambient = glm::vec3(0);
-		glm::vec3 diffuse = glm::vec3(1, 1, 1);
-		glm::vec3 specular = glm::vec3(0);
-		float reflectivity = 0;
-		float shininess = 0;
+		std::string metallicTexture;
+
+		std::string roughnessTexture;
+
+		std::string AOTexture;
+
+		float roughness;
+		float metallic;
+		float ao;
+		float emissive;
 
 	};
 

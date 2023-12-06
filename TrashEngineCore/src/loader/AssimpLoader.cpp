@@ -401,15 +401,7 @@ namespace TrashEngine {
 
             materialData.diffuseTexture = ProcessTexture(aMaterial, aiTextureType_DIFFUSE, texturePath);
             materialData.normalTexture = ProcessTexture(aMaterial, aiTextureType_NORMALS, texturePath);
-            materialData.diffuse = glm::vec3(1);
-            materialData.ambient = glm::vec3(0);
-            materialData.specular = glm::vec3(0);
-            ai_real floatValue;
-            aiGetMaterialFloat(aMaterial, AI_MATKEY_REFLECTIVITY, &floatValue);
-            materialData.reflectivity = floatValue;
-            aiGetMaterialFloat(aMaterial, AI_MATKEY_SHININESS, &floatValue);
-            materialData.shininess = floatValue;
-
+            
             aiColor4D color;
             aiGetMaterialColor(aMaterial, AI_MATKEY_COLOR_DIFFUSE, &color);
             materialData.diffuseColor = glm::vec3(color.r, color.g, color.b);

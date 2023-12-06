@@ -50,11 +50,6 @@ namespace TrashEngine {
 				this->m_shader->load(this->m_tiModelMatrixLocation, glm::transpose(glm::inverse(instanceData.transform)));
 				for (const auto& mesh : model->getMeshes()) {
 					MaterialData materialData{};
-					materialData.ambient = mesh.material->getAmbient();
-					materialData.diffuse = mesh.material->getDiffuse();
-					materialData.specular = mesh.material->getSpecular();
-					materialData.shininess = mesh.material->getShininess();// TODO
-					materialData.reflectivity = mesh.material->getReflectivity();
 					materialData.diffuseColor = mesh.material->getDiffuseColor();
 					if (mesh.material->getDiffuseTexture() != nullptr) {
 						mesh.material->getDiffuseTexture()->bindUnit(0);
@@ -68,6 +63,9 @@ namespace TrashEngine {
 						mesh.material->getNormalTexture()->bindUnit(1);
 						materialData.hasNormalTexture = 1;
 					}
+					materialData.ao = mesh.material->getAO();
+					materialData.roughness = mesh.material->getRoughness();
+					materialData.metallic = mesh.material->getMetallic();
 
 					glNamedBufferSubData(this->m_materialStorageBuffer, 0, sizeof(MaterialData), &materialData);
 					glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, (void*)(mesh.indexOffset * sizeof(GLuint)));

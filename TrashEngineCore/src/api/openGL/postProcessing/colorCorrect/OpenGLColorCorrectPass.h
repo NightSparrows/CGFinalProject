@@ -15,8 +15,14 @@ namespace TrashEngine {
 
 		GLuint renderPass(GLuint inputTexture);
 
+		void setExposure(float exposure) { this->m_exposure = exposure; }
+		
+		inline float getExposure() const { return this->m_exposure; }
+
 	private:
 		glm::ivec2 m_sceneSize;
+
+		float m_exposure{ 1.f };
 
 		Scope<OpenGLShaderProgram> m_colorProgram;
 

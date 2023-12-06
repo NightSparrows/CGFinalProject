@@ -16,6 +16,7 @@ namespace TrashEngine {
 		this->m_colorProgram->getUniformLocationFromName("u_rawSceneTexture");
 		this->m_colorProgram->getUniformLocationFromName("u_outImage");
 		this->m_colorProgram->getUniformLocationFromName("u_outputSize");
+		this->m_colorProgram->getUniformLocationFromName("u_exposure");
 		this->m_colorProgram->loadInt("u_rawSceneTexture", 0);
 		this->m_colorProgram->loadInt("u_outImage", 1);
 	}
@@ -43,6 +44,7 @@ namespace TrashEngine {
 
 		this->m_colorProgram->bind();
 		this->m_colorProgram->loadIVec2("u_outputSize", this->m_sceneSize);
+		this->m_colorProgram->loadFloat("u_exposure", this->m_exposure);
 		glBindTextureUnit(0, inputTexture);
 		glBindImageTexture(1, this->m_resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		glDispatchCompute((GLuint)ceil(this->m_sceneSize.x / 32) + 1, (GLuint)ceil(this->m_sceneSize.y / 32) + 1, 1);

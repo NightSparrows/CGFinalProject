@@ -20,41 +20,38 @@ namespace TrashEngine {
 
 		void setDiffuseColor(const glm::vec3& color) { this->m_diffuseColor = color; }
 
-		inline const glm::vec3& getAmbient() const { return this->m_ambient; }
-
-		inline const glm::vec3& getDiffuse() const { return this->m_diffuse; }
-
-		inline const glm::vec3& getSpecular() const { return this->m_specular; }
-
-		inline float getReflectivity() const { return this->m_reflectivity; }
-
-		inline float getShininess() const { return this->m_shininess; }
-
-		void setAmbient(const glm::vec3& ambient) { this->m_ambient = ambient; }
-
-		void setDiffuse(const glm::vec3& diffuse) { this->m_diffuse = diffuse; }
-
-		void setSpecular(const glm::vec3& specular) { this->m_specular = specular; }
-
-		void setReflectivity(float reflectivity) { this->m_reflectivity = reflectivity; }
-
-		void setShininess(float shininess) { this->m_shininess = shininess; }
-
 		OpenGLTexture* getDiffuseTexture() { return this->m_diffuseTexture.get(); }
 
 		OpenGLTexture* getNormalTexture() { return this->m_normalTexture.get(); }
 
+		bool loadMetallicTexture(const std::string& filePath);
+		OpenGLTexture* getMetallicTexture() { return this->m_metallicTexture.get(); }
+
+		inline float getAO() const { return this->m_ao; }
+
+		inline float getRoughness() const { return this->m_roughnesss; }
+
+		inline float getMetallic() const { return this->m_metallic; }
+
+		inline float getEmissive() const { return this->m_emissive; }
+
+		 // TODO setter
+
 	private:
 
-		glm::vec3 m_diffuseColor;
 		Scope<OpenGLTexture> m_diffuseTexture;
 		Scope<OpenGLTexture> m_normalTexture;
 
-		glm::vec3 m_ambient;
-		glm::vec3 m_diffuse;
-		glm::vec3 m_specular;
-		float m_reflectivity;
-		float m_shininess;
+		Scope<OpenGLTexture> m_metallicTexture;
+		Scope<OpenGLTexture> m_roughnessTexture;
+		Scope<OpenGLTexture> m_aoTexture;
+
+		glm::vec3 m_diffuseColor;
+		float m_metallic;
+		float m_roughnesss;
+		float m_ao{ 1.f };
+		float m_emissive;
+
 	};
 
 }

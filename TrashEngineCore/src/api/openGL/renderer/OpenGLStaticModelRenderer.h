@@ -27,14 +27,16 @@ namespace TrashEngine {
 
 		struct MaterialData
 		{
-			glm::vec3 diffuse;
-			glm::vec3 ambient;
-			glm::vec3 specular;
-			float shininess;
-			float reflectivity;
 			float hasDiffuseTexture;
 			glm::vec3 diffuseColor;
 			float hasNormalTexture;
+			float hasMetallicTexture;
+			float metallic;
+			float hasRoughnessTexture;
+			float roughness;
+			float hasAOTexture;
+			float ao;
+			float emissive;
 		};
 
 

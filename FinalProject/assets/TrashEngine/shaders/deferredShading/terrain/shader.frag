@@ -11,30 +11,22 @@ layout(location = 3) out vec4 out_GBuffer3;
 layout(location = 4) out vec4 out_GBuffer4;
 
 struct Material {
-	vec3 diffuse;
-	vec3 ambient;
-	vec3 specular;
-	float shininess;
-	float reflectivity;
 	float hasDiffuseTexture;
 	vec3 diffuseColor;
 	float hasNormalTexture;
+	float hasMetallicTexture;
+	float metallic;
+	float hasRoughnessTexture;
+	float roughness;
+	float hasAOTexture;
+	float ao;
+	float emissive;
 };
 
 // use storage buffer?
 // a temp buffer struct for what data in material
 layout (std430, binding = 1) buffer material {
-/*
-	vec3 diffuse;
-	vec3 ambient;
-	vec3 specular;
-	float shininess;
-	float reflectivity;
-	float hasDiffuseTexture;
-	vec3 diffuseColor;
-	float hasNormalTexture;
-	*/
-	vec4 data[16];
+	vec4 data[3];
 }materialData;
 
 layout (location = 2) uniform sampler2D u_blendMap;
@@ -53,11 +45,10 @@ void main() {
 	// normal
 	vec3 fragNormal = in_normal;
 	
-	vec3 materialAmbient = vec3(0);
-	vec3 materialDiffuse = vec3(1);
-	vec3 materialSpecular = vec3(0);
-	float shininess = 0;
-	float reflectivity = 0;
+	float metallic = 0.0;
+	float roughness = 0.0;
+	float ao = 1.0;
+	float emissive = 2.0;
 	
 	// diffuse color
 	vec4 bgColor = texture(u_diffuseTextures[3], tiledCoords) * bgAmount;
@@ -68,10 +59,9 @@ void main() {
 	vec3 diffuseColor = bgColor.rgb + rColor.rgb + gColor.rgb + bColor.rgb;
 	
 	out_GBuffer0 = vec4(in_position.xyz, fragNormal.x);
-	out_GBuffer1 = vec4(fragNormal.yz, materialAmbient.xy);
-	out_GBuffer2 = vec4(materialAmbient.z, materialDiffuse);
-	out_GBuffer3 = vec4(materialSpecular, shininess);
-	out_GBuffer4 = vec4(reflectivity, diffuseColor);
+	out_GBuffer1 = vec4(fragNormal.yz, diffuseColor.xy);
+	out_GBuffer2 = vec4(diffuseColor.z, metallic, roughness, ao);
+	out_GBuffer3 = vec4(emissive, 0, 0, 0);
 	
 }
 

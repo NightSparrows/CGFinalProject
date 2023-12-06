@@ -16,24 +16,25 @@ void main() {
 
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	vec2 texelSize = 1.0 / vec2(u_outputSize);
+	vec2 inputTexelSize = texelSize * 2.0;
 	vec2 texCoord = vec2(pixel_coords) * texelSize;
 	
 	
 	vec4 storeColor = vec4(0.0);
 	// 試試看
 	if (u_vertical > 0) {
-		vec2 offset = vec2(0, -5 * texelSize.y);
+		vec2 offset = vec2(0, -5 * inputTexelSize.y);
 		for(int i = 0; i < 11; i++) {
 			vec2 inputCoord = texCoord + offset;
 			storeColor += texture(u_inputImage, inputCoord) * kernelValue[i];
-			offset.y += texelSize.y;
+			offset.y += inputTexelSize.y;
 		}
 	} else {
-		vec2 offset = vec2(-5 * texelSize.x, 0);
+		vec2 offset = vec2(-5 * inputTexelSize.x, 0);
 		for(int i = 0; i < 11; i++) {
 			vec2 inputCoord = texCoord + offset;
 			storeColor += texture(u_inputImage, inputCoord) * kernelValue[i];
-			offset.x += texelSize.x;
+			offset.x += inputTexelSize.x;
 		}
 	}
 	

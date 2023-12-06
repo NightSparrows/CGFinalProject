@@ -52,13 +52,11 @@ namespace TrashEngine {
 			* buffer 0:
 			*	position.x			position.y			position.z			normal.x
 			* buffer 1:
-			*	normal.y			normal.z			materialAmbient.x	materialAmbient.y
+			*	normal.y			normal.z			albedo.x			albedo.y
 			* buffer 2:
-			*	materialAmbient.z	materialDiffuse.x	materialDiffuse.y	materialDiffuse.z
+			*	albedo.z			metallic			roughness			ao
 			* buffer 3:
-			*	 materialSpecular.x materialSpecular.y	materialSpecular.z  materialShininess
-			* buffer 4:
-			*	 materialReflectivity diffuseColor.x diffuseColor.y diffuseColor.z
+			*	emissive
 			*/
 			GLuint gBuffers[5];
 		};
@@ -103,6 +101,7 @@ namespace TrashEngine {
 		// I want to use it by skybox particle sun ... etc
 		ForwardPassFramebuffer m_forwardPassFramebuffer;
 
+		bool m_enableBloom{ true };
 		Scope<OpenGLBloomPass> m_bloomPass;
 
 		Scope<OpenGLColorCorrectPass> m_colorCorrectPass;

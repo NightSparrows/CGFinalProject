@@ -6,6 +6,8 @@ layout (location = 0) uniform sampler2D u_rawSceneTexture;
 uniform ivec2 u_outputSize;
 layout (location = 1) uniform writeonly image2D u_outImage;
 
+uniform float u_exposure;
+
 vec3 ACESToneMapping(vec3 color, float adapted_lum)
 {
 	const float A = 2.51f;
@@ -25,17 +27,9 @@ void main() {
 	vec2 texCoord = vec2(pixel_coords) * texelSize;
 	
 	vec4 rawSceneColor = texture(u_rawSceneTexture, texCoord);
-	/*
-	float exposure = 0.5;
-	vec3 toneMapped = vec3(1.0) - exp(-rawSceneColor.rgb * exposure);
-	
-	float gamma = 1.0;
-	rawSceneColor.rgb = pow(toneMapped, vec3(1.0 / gamma));
-	*/
-	
+
 	// exposure
-	const float exposure = 1.0;
-	rawSceneColor.rgb = vec3(1.0) - exp(-rawSceneColor.rgb * exposure);
+	rawSceneColor.rgb = vec3(1.0) - exp(-rawSceneColor.rgb * u_exposure);
 	
 	rawSceneColor.rgb = ACESToneMapping(rawSceneColor.rgb, 1.0);
 	// gamma correction

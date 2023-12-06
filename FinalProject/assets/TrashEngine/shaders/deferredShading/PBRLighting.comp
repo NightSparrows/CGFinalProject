@@ -72,76 +72,118 @@ const float zFar = 1000f;
 const uint sizeX = uint(ceil(1280.0 / float(gridSizeX)));
 
 struct Material {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shininess;
-	float reflectivity;
+	vec3 albedo;
+	vec3 normal;
+	float metallic;
+	float roughness;
+	float ao;
+	float emissive;
 };
 
-vec3 calcDirectionLight(DirectionLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragNormal, Material material) {
-	vec3 totalLightColor = vec3(0.0);
+const float PI = 3.14159265359;
+
+float distributionGGX(float NdotH, float roughness)
+{
+    float a      = roughness*roughness;
+    float a2     = a*a;
+    float NdotH2 = NdotH*NdotH;
 	
-	vec3 toLightVector = -light.direction.xyz;
-	vec3 unitLightVector = normalize(toLightVector);
+    float num   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
 	
-	// ambient
-	totalLightColor += light.color.xyz * material.ambient;
-	
-	// diffuse
-	float nDotl = dot(FragNormal, unitLightVector);
-	
-	if (nDotl > 0.0) {
-		vec3 lightColor = nDotl * light.color.xyz;
-		
-		totalLightColor += lightColor * material.diffuse;
-	}
-	
-	// specular
-	vec3 specularReflection = reflect(-unitLightVector, FragNormal);
-	float reflection = dot(specularReflection, unitViewDir);
-	
-	if (reflection > 0) {
-		vec3 specularColor = light.color.xyz * material.specular * pow(reflection, material.shininess) * material.reflectivity;
-		totalLightColor += specularColor;
-	}
-	
-	return totalLightColor;
+    return num / max(denom, 0.0000001);
 }
 
-vec3 calcPointLight(PointLight light, vec3 unitViewDir, vec3 FragPos, vec3 FragNormal, Material material) {
+float geometrySmith(float NdotV, float NdotL, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float ggx2  = NdotV / (NdotV * (1.0 - k) + k);
+    float ggx1  = NdotL / (NdotL * (1.0 - k) + k);
 	
-	vec3 totalLightColor = vec3(0.0);
+    return ggx1 * ggx2;
+}
+
+vec3 fresnelSchlick(float HdotV, vec3 baseReflectivity)
+{
+	return baseReflectivity + (1.0 - baseReflectivity) * pow(1.0 - HdotV, 5.0);
+}
+
+/**
+	unitViewDir = normalize(camPos - FragPos) in world space
+*/
+vec3 calcDirectionLight(DirectionLight light, vec3 unitViewDir, vec3 FragPos, Material material) {
+
+	vec3 baseReflectivity = mix(vec3(0.04), material.albedo, material.metallic);
+	
+	// reflection equation
+	
+	vec3 N = material.normal;
+	vec3 V = unitViewDir;
+	
+	vec3 L = normalize(-light.direction.xyz);
+	vec3 H = normalize(V + L);
+	
+	vec3 radiance = light.color.xyz;
+	
+	// Cook-Torrance BRDF
+	float NdotV = max(dot(N, V), 0.0000001);
+	float NdotL = max(dot(N, L), 0.0000001);
+	float HdotV = max(dot(H, V), 0.0);
+	float NdotH = max(dot(N, H), 0.0);
+	
+	float D = distributionGGX(NdotH, material.roughness);
+	float G = geometrySmith(NdotV, NdotL, material.roughness);
+	vec3 F = fresnelSchlick(HdotV, baseReflectivity);
+	
+	vec3 specular = D * G * F;
+	specular/= 4.0 * NdotV * NdotL;
+	
+	vec3 kD = vec3(1.0) - F;
+	
+	kD *= 1.0 - material.metallic;
+	
+	return (kD * material.albedo / PI + specular) * radiance * NdotL;
+}
+
+vec3 calcPointLight(PointLight light, vec3 unitViewDir, vec3 FragPos, Material material) {
+	
+	vec3 baseReflectivity = mix(vec3(0.04), material.albedo, material.metallic);
+	
+	// reflection equation
+	
+	vec3 N = material.normal;
+	vec3 V = unitViewDir;
 	
 	vec3 toLightVector = light.position.xyz - FragPos;
-	vec3 unitLightVector = normalize(toLightVector);
 	
-	// ambient
-	totalLightColor += light.color.xyz * material.ambient;
+	vec3 L = normalize(toLightVector);
+	vec3 H = normalize(V + L);
 	
-	// diffuse
-	float nDotl = dot(FragNormal, unitLightVector);
+	float lightDistance = length(toLightVector);
+	float attenuation = 1.0 / max(light.attenuation.x + light.attenuation.y * lightDistance + light.attenuation.z * (lightDistance * lightDistance), 1.0);
+	vec3 radiance = light.color.xyz * attenuation;
 	
-	if (nDotl > 0.0) {
-		float lightDistance = length(toLightVector);
-		
-		vec3 lightColor = nDotl * light.color.xyz;
-		
-		float attenuation = 1.0 / (light.attenuation.x + light.attenuation.y * lightDistance + light.attenuation.z * lightDistance * lightDistance);
-		
-		totalLightColor += lightColor * attenuation * material.diffuse;
-	}
+	// Cook-Torrance BRDF
+	float NdotV = max(dot(N, V), 0.0000001);
+	float NdotL = max(dot(N, L), 0.0000001);
+	float HdotV = max(dot(H, V), 0.0);
+	float NdotH = max(dot(N, H), 0.0);
 	
-	// specular
-	vec3 specularReflection = reflect(-unitLightVector, FragNormal);
-	float reflection = dot(specularReflection, unitViewDir);
+	float D = distributionGGX(NdotH, material.roughness);
+	float G = geometrySmith(NdotV, NdotL, material.roughness);
+	vec3 F = fresnelSchlick(HdotV, baseReflectivity);
 	
-	if (reflection > 0) {
-		vec3 specularColor = light.color.xyz * material.specular * pow(reflection, material.shininess) * material.reflectivity;
-		totalLightColor += specularColor;
-	}
+	vec3 specular = D * G * F;
+	specular/= 4.0 * NdotV * NdotL;
 	
-	return totalLightColor;
+	vec3 kD = vec3(1.0) - F;
+	
+	kD *= 1.0 - material.metallic;
+	
+	return (kD * material.albedo / PI + specular) * radiance * NdotL;
 	
 }
 
@@ -191,21 +233,23 @@ void main() {
 	
 	vec3 fragPosition = GBufferTexture0.rgb;
 	vec3 normal = normalize(vec3(GBufferTexture0.w, GBufferTexture1.xy));
+	vec3 albedoColor = vec3(GBufferTexture1.zw, GBufferTexture2.x);
 	
 	vec3 unitViewDir = normalize(GlobalUbo.cameraPosition.xyz - fragPosition);
 	
 	// current material
 	Material material;
-	material.ambient = vec3(GBufferTexture1.zw, GBufferTexture2.x);
-	material.diffuse = GBufferTexture2.yzw;
-	material.specular = GBufferTexture3.xyz;
-	material.shininess = GBufferTexture3.w;
-	material.reflectivity = GBufferTexture4.x;
+	material.albedo = albedoColor;
+	material.normal = normal;
+	material.metallic = GBufferTexture2.y;
+	material.roughness = GBufferTexture2.z;
+	material.ao = GBufferTexture2.w;
+	material.emissive = GBufferTexture3.x;
 
-	vec3 diffuseColor = GBufferTexture4.yzw;
-	vec4 out_Color = vec4(0, 0, 0, 1);
+	vec4 out_Color = vec4(0.0);
+	out_Color.rgb += material.albedo * material.emissive;
 	
-	if (diffuseColor.x > 0 || diffuseColor.y > 0 || diffuseColor.z > 0) {
+	if (albedoColor.x > 0 || albedoColor.y > 0 || albedoColor.z > 0) {
 		//uint pointLightCount = lightGrid[clusterIndex].count;
 		//uint pointLightOffset = lightGrid[clusterIndex].offset;
 		
@@ -223,17 +267,17 @@ void main() {
 		
 		// 先使用純deferred shading 因為沒時間研究
 		for(uint i = 0; i < numberOfPointLights.x; i++) {
-			totalLightColor += calcPointLight(pointLights[i], unitViewDir, fragPosition, normal, material);
+			totalLightColor += calcPointLight(pointLights[i], unitViewDir, fragPosition, material);
 		}
 		
 		// direction light (not effect by attenuation)
 		for(uint i = 0; i < numberOfDirectionLights.x; i++) {
-			totalLightColor += calcDirectionLight(directionLights[i], unitViewDir, fragPosition, normal, material);
+			totalLightColor += calcDirectionLight(directionLights[i], unitViewDir, fragPosition, material);
 		}
 		
-		totalLightColor = max(totalLightColor, 0.1);
+		//totalLightColor = max(totalLightColor, 0.1);
 		
-		out_Color = vec4(totalLightColor, 1.0) * vec4(diffuseColor, 1.0);
+		out_Color += vec4(totalLightColor, 1.0);
 		
 	}
 	//debug_Color.b += 0.1 * pointLightCount;

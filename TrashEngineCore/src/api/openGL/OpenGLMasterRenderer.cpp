@@ -132,7 +132,9 @@ namespace TrashEngine {
 		this->renderScene(camera, this->m_renderSize, this->m_rawSceneTexture);
 		nextSceneTexture = this->m_rawSceneTexture;
 
-		nextSceneTexture = this->m_bloomPass->renderBloom(nextSceneTexture);
+		if (this->m_enableBloom) {
+			nextSceneTexture = this->m_bloomPass->renderBloom(nextSceneTexture);
+		}
 		nextSceneTexture = this->m_colorCorrectPass->renderPass(nextSceneTexture);
 
 		// draw to screen
@@ -158,11 +160,18 @@ namespace TrashEngine {
 
 		ImGui::Begin("Bloom");
 		static float threshold = 1.f;
+		ImGui::Checkbox("Enable", &this->m_enableBloom);
 		ImGui::SliderFloat("Threshold", &threshold, 0, 10.f);
 		this->m_bloomPass->setThreshold(threshold);
 		static float intensity = 1.f;
 		ImGui::SliderFloat("Intensity", &intensity, 0, 10.f);
 		this->m_bloomPass->setIntensity(intensity);
+		ImGui::End();
+
+		ImGui::Begin("Color correction");
+		static float exposure = 1.f;
+		ImGui::DragFloat("Exposure", &exposure);
+		this->m_colorCorrectPass->setExposure(exposure);
 		ImGui::End();
 
 #endif // NS_DEBUG

@@ -23,11 +23,8 @@ namespace TrashEngine {
 			auto material = CreateScope<OpenGLMaterial>();
 
 			material->setDiffuseColor(materialData.diffuseColor);
-			material->setAmbient(materialData.ambient);
-			material->setDiffuse(materialData.diffuse);
-			material->setSpecular(materialData.specular);
-			material->setReflectivity(materialData.reflectivity);
-			material->setShininess(materialData.shininess);
+
+			// TODO
 
 			if (!materialData.diffuseTexture.empty()) {
 				material->loadDiffuseTexture(materialData.diffuseTexture);

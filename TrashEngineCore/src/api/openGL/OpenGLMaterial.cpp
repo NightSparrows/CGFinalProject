@@ -34,4 +34,20 @@ namespace TrashEngine {
 		return result;
 	}
 
+	bool OpenGLMaterial::loadMetallicTexture(const std::string& filePath)
+	{
+		this->m_metallicTexture = CreateScope<OpenGLTexture>();
+
+		OpenGLTexture::TextureConfig config;
+		config.anisotropicFiltering = true;
+		config.mipMapping = true;
+
+		bool result = this->m_metallicTexture->loadTexture2D(filePath, config);
+		if (!result) {
+			this->m_metallicTexture.reset();
+		}
+
+		return result;
+	}
+
 }
