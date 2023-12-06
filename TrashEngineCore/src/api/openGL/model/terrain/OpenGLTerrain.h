@@ -13,9 +13,15 @@ namespace TrashEngine {
 
 		bool loadHeightMap(const std::string& filePath) override;
 
+		bool loadMaterial(const TerrainMaterialData& materialData) override;
+
 		inline OpenGLTexture* getHeightMapTexture() { return this->m_heightMapTexture.get(); }
 
 		inline OpenGLTexture* getNormalMapTexture() { return this->m_normalMapTexture.get(); }
+
+		inline OpenGLTexture* getBlendMapTexture() { return this->m_blendMapTexture.get(); }
+
+		inline const std::vector<Scope<OpenGLMaterial>>& getMaterials() const { return this->m_materials; }
 
 		inline float getHeightIntensity() const { return this->m_heightIntensity; }
 
@@ -32,6 +38,8 @@ namespace TrashEngine {
 		Scope<OpenGLTexture> m_normalMapTexture;
 
 		Scope<OpenGLTexture> m_blendMapTexture;
+
+		std::vector<Scope<OpenGLMaterial>> m_materials;
 
 	};
 

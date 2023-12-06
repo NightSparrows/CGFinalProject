@@ -27,4 +27,39 @@ namespace TrashEngine {
 		return true;
 	}
 
+	bool OpenGLTerrain::loadMaterial(const TerrainMaterialData& materialData)
+	{
+		this->m_blendMapTexture = CreateScope<OpenGLTexture>();
+
+		OpenGLTexture::TextureConfig config;
+		config.mipMapping = false;
+		config.anisotropicFiltering = false;
+		if (!this->m_blendMapTexture->loadTexture2D(materialData.blendMap, config)) {
+			return false;
+		}
+
+		for (auto& materialData : materialData.materialData) {
+			auto material = CreateScope<OpenGLMaterial>();
+
+			material->setDiffuseColor(materialData.diffuseColor);
+			material->setAmbient(materialData.ambient);
+			material->setDiffuse(materialData.diffuse);
+			material->setSpecular(materialData.specular);
+			material->setReflectivity(materialData.reflectivity);
+			material->setShininess(materialData.shininess);
+
+			if (!materialData.diffuseTexture.empty()) {
+				material->loadDiffuseTexture(materialData.diffuseTexture);
+			}
+
+			if (!materialData.normalTexture.empty()) {
+				material->loadNormalTexture(materialData.normalTexture);
+			}
+
+			this->m_materials.emplace_back(std::move(material));
+		}
+
+		return true;
+	}
+
 }

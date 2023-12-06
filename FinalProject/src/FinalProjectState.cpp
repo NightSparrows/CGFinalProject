@@ -107,7 +107,7 @@ void FinalProjectState::onInit()
 	auto& lightCom = testLightEntity.addComponent<TrashEngine::PointLight>();
 	lightCom.position = glm::vec3(5, 5, 10);
 	lightCom.enabled = 1.f;
-	lightCom.color = glm::vec3(1.3f, 1.3f, 1.3f);
+	lightCom.color = glm::vec3(1.f, 1.f, 1.f);
 	lightCom.attenuation.x = 1.f;
 	lightCom.attenuation.y = 0.009f;
 	lightCom.attenuation.z = 0.0032f;
@@ -162,16 +162,24 @@ void FinalProjectState::onInit()
 	animatorCom.animator->start("idle", 1.f);
 
 	// test terrain
+	TrashEngine::TerrainMaterialData terrainData;
+	terrainData.blendMap = "res/terrain/blendMap.png";
+	terrainData.materialData.resize(4);
+	terrainData.materialData[0].diffuseTexture = "res/terrain/r.png";
+	terrainData.materialData[1].diffuseTexture = "res/terrain/g.png";
+	terrainData.materialData[2].diffuseTexture = "res/terrain/b.png";
+	terrainData.materialData[3].diffuseTexture = "res/terrain/back.png";
 	auto testTerrainEntity = scene->createEntity("test Terrain");
 	auto& testTerrainCom = testTerrainEntity.addComponent<TrashEngine::TerrainComponent>();
 	testTerrainCom.terrain = this->m_engine->getGraphicsContext()->createTerrain(50, glm::ivec2(0, 0));
 	testTerrainCom.terrain->loadHeightMap("res/terrain/heightMap.png");
+	testTerrainCom.terrain->loadMaterial(terrainData);
 
 	// test direction light
 	auto testDirLightEntity = scene->createEntity("test dir light");
 	auto& testDirLight = testDirLightEntity.addComponent<TrashEngine::DirectionLight>();
-	testDirLight.color = glm::vec3(1.3, 1.3, 1.3);
-	testDirLight.direction = glm::vec3(-0.5, -0.5, -0.5);
+	testDirLight.color = glm::vec3(1.3f, 1.3f, 1.3f);
+	testDirLight.direction = glm::vec3(-0.5f, -0.5f, -0.5f);
 }
 
 float testTime = 0;

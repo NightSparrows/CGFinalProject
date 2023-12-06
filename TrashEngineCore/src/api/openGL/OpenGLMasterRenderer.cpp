@@ -155,6 +155,16 @@ namespace TrashEngine {
 		ImGui::Text(FPSStr.c_str());
 
 		ImGui::End();
+
+		ImGui::Begin("Bloom");
+		static float threshold = 1.f;
+		ImGui::SliderFloat("Threshold", &threshold, 0, 10.f);
+		this->m_bloomPass->setThreshold(threshold);
+		static float intensity = 1.f;
+		ImGui::SliderFloat("Intensity", &intensity, 0, 10.f);
+		this->m_bloomPass->setIntensity(intensity);
+		ImGui::End();
+
 #endif // NS_DEBUG
 
 

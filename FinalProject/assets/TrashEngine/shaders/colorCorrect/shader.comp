@@ -32,7 +32,15 @@ void main() {
 	float gamma = 1.0;
 	rawSceneColor.rgb = pow(toneMapped, vec3(1.0 / gamma));
 	*/
+	
+	// exposure
+	const float exposure = 1.0;
+	rawSceneColor.rgb = vec3(1.0) - exp(-rawSceneColor.rgb * exposure);
+	
 	rawSceneColor.rgb = ACESToneMapping(rawSceneColor.rgb, 1.0);
+	// gamma correction
+	const float gamma = 2.2;
+	rawSceneColor.rgb = pow(rawSceneColor.rgb, vec3(1.0 / gamma));
 	
 	imageStore(u_outImage, pixel_coords, rawSceneColor);
 	

@@ -18,7 +18,6 @@ namespace TrashEngine {
 		this->m_fetchColorProgram->getUniformLocationFromName("u_toImage");
 		this->m_fetchColorProgram->loadInt("u_toImage", 1);
 		this->m_fetchColorProgram->getUniformLocationFromName("u_threshold");
-		this->m_fetchColorProgram->loadFloat("u_threshold", 1.f);
 		this->m_fetchColorProgram->getUniformLocationFromName("u_imageSize");
 		
 
@@ -50,6 +49,7 @@ namespace TrashEngine {
 		this->m_combineProgram->getUniformLocationFromName("u_bloomTexture");
 		this->m_combineProgram->getUniformLocationFromName("u_outImage");
 		this->m_combineProgram->getUniformLocationFromName("u_outputSize");
+		this->m_combineProgram->getUniformLocationFromName("u_intensity");
 		this->m_combineProgram->loadInt("u_rawSceneTexture", 0);
 		this->m_combineProgram->loadInt("u_bloomTexture", 1);
 		this->m_combineProgram->loadInt("u_outImage", 2);
@@ -117,6 +117,7 @@ namespace TrashEngine {
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		this->m_fetchColorProgram->bind();
+		this->m_fetchColorProgram->loadFloat("u_threshold", this->m_threshold);
 		glBindTextureUnit(0, rawSceneTexture);
 		glBindImageTexture(1, this->m_downScaleTextures[0], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		this->m_fetchColorProgram->loadIVec2("u_imageSize", this->m_sizes[1]);
@@ -145,7 +146,7 @@ namespace TrashEngine {
 		glBindImageTexture(2, this->m_upScaleTextures[this->m_levels - 1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		glDispatchCompute((GLuint)ceil(this->m_sizes[this->m_levels - 1].x / 32) + 1, (GLuint)ceil(this->m_sizes[this->m_levels - 1].y / 32) + 1, 1);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-		for (uint32_t i = 1; i < this->m_levels - 1; i++) {
+		for (uint32_t i = 1; i < this->m_levels; i++) {
 			this->m_upAddProgram->loadIVec2("u_outputSize", this->m_sizes[this->m_levels - 1 - i]);
 			glBindTextureUnit(0, this->m_downScaleTextures[this->m_levels - i - 1]);
 			glBindTextureUnit(1, this->m_upScaleTextures[this->m_levels - i]);
@@ -153,15 +154,10 @@ namespace TrashEngine {
 			glDispatchCompute((GLuint)ceil(this->m_sizes[this->m_levels - 1 - i].x / 32) + 1, (GLuint)ceil(this->m_sizes[this->m_levels - 1 - i].y / 32) + 1, 1);
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		}
-		this->m_upAddProgram->loadIVec2("u_outputSize", this->m_sizes[0]);
-		glBindTextureUnit(0, 0);
-		glBindTextureUnit(1, this->m_upScaleTextures[1]);
-		glBindImageTexture(2, this->m_upScaleTextures[0], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-		glDispatchCompute((GLuint)ceil(this->m_sizes[0].x / 32) + 1, (GLuint)ceil(this->m_sizes[0].y / 32) + 1, 1);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 		this->m_combineProgram->bind();
 		this->m_combineProgram->loadIVec2("u_outputSize", this->m_sizes[0]);
+		this->m_combineProgram->loadFloat("u_intensity", this->m_intensity);
 		glBindTextureUnit(0, rawSceneTexture);
 		glBindTextureUnit(1, this->m_upScaleTextures[0]);
 		glBindImageTexture(2, this->m_resultTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);

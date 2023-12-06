@@ -23,8 +23,11 @@ namespace TrashEngine {
 		this->m_shader->getUniformLocationFromName("u_position");
 		this->m_shader->getUniformLocationFromName("u_heightMap");
 		this->m_shader->getUniformLocationFromName("u_normalMap");
+		this->m_shader->getUniformLocationFromName("u_blendMap");
+		this->m_diffuseTexturesLocation = this->m_shader->getUniformLocationFromName("u_diffuseTextures");
 		this->m_shader->loadInt("u_heightMap", 0);
 		this->m_shader->loadInt("u_normalMap", 1);
+		this->m_shader->loadInt("u_blendMap", 2);
 
 		// setup up terrain vertex buffer
 		const uint32_t divison = 32;
@@ -104,6 +107,15 @@ namespace TrashEngine {
 			// bind terrain textures (normal map, height map, blend map, terrain textures)
 			terrain->getHeightMapTexture()->bindUnit(0);
 			terrain->getNormalMapTexture()->bindUnit(1);
+			auto blendMap = terrain->getBlendMapTexture();
+			if (blendMap != nullptr) {
+				blendMap->bindUnit(2);
+				for (uint32_t i = 0; i < 4; i++) {
+					glProgramUniform1i(this->m_shader->getHandle(), this->m_diffuseTexturesLocation + i, 3 + i);
+					terrain->getMaterials()[i]->getDiffuseTexture()->bindUnit(3 + i);
+				}
+				// TODO normal mapping
+			}
 			this->m_shader->loadFloat("u_heightIntensity", terrain->getHeightIntensity());
 			this->m_shader->loadIVec2("u_position", terrain->getPosition());
 			glDrawElements(GL_PATCHES, this->m_indicesCount, GL_UNSIGNED_INT, 0);

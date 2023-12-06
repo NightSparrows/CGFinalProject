@@ -12,6 +12,7 @@ namespace TrashEngine {
 
 		std::string blendMap;
 
+		// r g b back
 		std::vector<MaterialData> materialData;
 
 	};

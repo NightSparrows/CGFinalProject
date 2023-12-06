@@ -15,8 +15,21 @@ namespace TrashEngine {
 
 		GLuint renderBloom(GLuint rawSceneTexture);
 
+		void setIntensity(float intensity) { this->m_intensity = intensity; }
+
+		inline float getIntensity() const { return this->m_intensity; }
+
+		void setThreshold(float threshold) { this->m_threshold = threshold; }
+
+		inline float getThreshold() const { return this->m_threshold; }
+
 	private:
 		glm::ivec2 m_sceneSize;
+
+		// the bloom threshold
+		float m_threshold{ 1.f };
+		// how to bloom intensity is
+		float m_intensity{ 1.f };
 
 		// how many bloom level
 		uint32_t m_levels{ 5 };

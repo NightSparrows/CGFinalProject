@@ -22,6 +22,7 @@ namespace TrashEngine {
 	private:
 
 		Scope<OpenGLShaderProgram> m_shader;
+		GLint m_diffuseTexturesLocation;
 
 		GLuint m_meshVaoHandle;
 		GLuint m_indexVertexBuffer;

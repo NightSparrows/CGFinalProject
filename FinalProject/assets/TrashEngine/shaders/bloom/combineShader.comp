@@ -7,6 +7,8 @@ layout (location = 1) uniform sampler2D u_bloomTexture;
 uniform ivec2 u_outputSize;
 layout (location = 2) uniform writeonly image2D u_outImage;
 
+uniform float u_intensity;
+
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 void main() {
 
@@ -17,7 +19,7 @@ void main() {
 	vec4 rawSceneColor = texture(u_rawSceneTexture, texCoord);
 	vec4 bloomColor = texture(u_bloomTexture, texCoord);
 	
-	vec4 outColor = rawSceneColor + bloomColor;
+	vec4 outColor = rawSceneColor + bloomColor * u_intensity;
 	
 	imageStore(u_outImage, pixel_coords, outColor);
 	
