@@ -101,6 +101,8 @@ namespace TrashEngine {
 		this->m_shader->bind();
 		glPatchParameteri(GL_PATCH_VERTICES, 4);
 		glBindVertexArray(this->m_meshVaoHandle);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 		// for each terrain
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		for (auto terrain : this->m_terrains) {

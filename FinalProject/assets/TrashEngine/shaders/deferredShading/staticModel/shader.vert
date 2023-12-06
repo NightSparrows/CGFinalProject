@@ -9,6 +9,7 @@ layout (std140, binding = 0) uniform globalBuffer {
 	mat4 projectionMatrix;
 	mat4 viewMatrix;
 	vec4 cameraPosition;
+	mat4 inverseProjectionMatrix;
 }GlobalUbo;
 
 uniform mat4 u_transformationMatrix;

@@ -8,7 +8,7 @@ TrashEngine::Ref<TrashEngine::StaticModel> testModel;
 TrashEngine::Ref<TrashEngine::Scene> scene;
 TrashEngine::Entity testEntity;
 TrashEngine::Entity testEntity2;
-TrashEngine::Camera camera(1920.f / 1080.f, glm::radians(70.f), 0.1f, 5000.f);
+TrashEngine::Camera camera(1920.f / 1080.f, glm::radians(70.f), 0.1f, 9000.f);
 TrashEngine::Entity testLightEntity;
 
 FinalProjectState::FinalProjectState(TrashEngine::GameEngine* engine) : 
@@ -176,10 +176,12 @@ void FinalProjectState::onInit()
 	testTerrainCom.terrain->loadMaterial(terrainData);
 
 	// test direction light
+	/*
 	auto testDirLightEntity = scene->createEntity("test dir light");
 	auto& testDirLight = testDirLightEntity.addComponent<TrashEngine::DirectionLight>();
 	testDirLight.color = glm::vec3(1.3f, 1.3f, 1.3f);
 	testDirLight.direction = glm::vec3(-0.5f, -0.5f, -0.5f);
+	*/
 }
 
 float testTime = 0;

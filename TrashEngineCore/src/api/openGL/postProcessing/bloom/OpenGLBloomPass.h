@@ -29,7 +29,7 @@ namespace TrashEngine {
 		// the bloom threshold
 		float m_threshold{ 1.f };
 		// how to bloom intensity is
-		float m_intensity{ 1.f };
+		float m_intensity{ 0.05f };
 
 		// how many bloom level
 		uint32_t m_levels{ 5 };

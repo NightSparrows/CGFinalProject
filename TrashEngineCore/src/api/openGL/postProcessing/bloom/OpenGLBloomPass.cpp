@@ -146,7 +146,7 @@ namespace TrashEngine {
 		glBindImageTexture(2, this->m_upScaleTextures[this->m_levels - 1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		glDispatchCompute((GLuint)ceil(this->m_sizes[this->m_levels - 1].x / 32) + 1, (GLuint)ceil(this->m_sizes[this->m_levels - 1].y / 32) + 1, 1);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-		for (uint32_t i = 1; i < this->m_levels; i++) {
+		for (uint32_t i = 1; i < this->m_levels - 1; i++) {
 			this->m_upAddProgram->loadIVec2("u_outputSize", this->m_sizes[this->m_levels - 1 - i]);
 			glBindTextureUnit(0, this->m_downScaleTextures[this->m_levels - i - 1]);
 			glBindTextureUnit(1, this->m_upScaleTextures[this->m_levels - i]);
@@ -154,6 +154,12 @@ namespace TrashEngine {
 			glDispatchCompute((GLuint)ceil(this->m_sizes[this->m_levels - 1 - i].x / 32) + 1, (GLuint)ceil(this->m_sizes[this->m_levels - 1 - i].y / 32) + 1, 1);
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		}
+		this->m_upAddProgram->loadIVec2("u_outputSize", this->m_sizes[0]);
+		glBindTextureUnit(0, 0);
+		glBindTextureUnit(1, this->m_upScaleTextures[1]);
+		glBindImageTexture(2, this->m_upScaleTextures[0], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+		glDispatchCompute((GLuint)ceil(this->m_sizes[0].x / 32) + 1, (GLuint)ceil(this->m_sizes[0].y / 32) + 1, 1);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 		this->m_combineProgram->bind();
 		this->m_combineProgram->loadIVec2("u_outputSize", this->m_sizes[0]);

@@ -1,6 +1,6 @@
 #version 450
 
-layout (quads, equal_spacing, ccw) in;
+layout (quads, equal_spacing, cw) in;
 
 layout (location = 0) in vec2 in_texCoords[];
 

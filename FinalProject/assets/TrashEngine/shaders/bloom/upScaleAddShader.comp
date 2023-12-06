@@ -21,7 +21,7 @@ void main() {
 	// impl tent filter
 	vec4 storeColor = tentFilter(u_inputImage, texCoord, texelSize);
 
-	storeColor += tentFilter(u_inputUpscaleImage, texCoord, texelSize / 2.0);
+	storeColor += tentFilter(u_inputUpscaleImage, texCoord, texelSize);
 
 	imageStore(u_outputImage, pixel_coords, storeColor);
 }

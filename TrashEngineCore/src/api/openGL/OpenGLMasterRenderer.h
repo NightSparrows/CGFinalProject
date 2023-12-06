@@ -8,6 +8,8 @@
 #include "renderer/OpenGLTerrainRenderer.h"
 #include "postProcessing/bloom/OpenGLBloomPass.h"
 #include "postProcessing/colorCorrect/OpenGLColorCorrectPass.h"
+#include "renderer/OpenGLSkyRenderer.h"
+#include <TrashEngine/scene/DirectionLight.h>
 
 #define MAX_POINT_LIGHTS	20000
 #define MAX_DIRECTION_LIGHTS	8
@@ -116,6 +118,9 @@ namespace TrashEngine {
 		Scope<OpenGLStaticModelRenderer> m_staticModelRenderer;
 		Scope<OpenGLAnimatedModelRenderer> m_animatedModelRenderer;
 		Scope<OpenGLTerrainRenderer> m_terrainRenderer;
+		// forward renderers
+		Scope<OpenGLSkyRenderer> m_skyRenderer;
+		DirectionLight m_sunLight;
 		// end renderers
 
 		//The variables that determine the size of the cluster grid. They're hand picked for now, but

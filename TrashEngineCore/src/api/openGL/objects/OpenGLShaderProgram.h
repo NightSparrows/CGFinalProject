@@ -26,6 +26,8 @@ namespace TrashEngine {
 
 		void loadIVec2(const std::string& uniformName, const glm::ivec2& value);
 
+		void loadVec3(const std::string& uniformName, const glm::vec3& value);
+
 		void load(GLint location, const glm::uvec2& value);
 
 		void load(GLint location, const glm::uvec4& value);

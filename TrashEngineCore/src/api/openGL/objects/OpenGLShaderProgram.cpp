@@ -58,6 +58,11 @@ namespace TrashEngine {
 		glProgramUniform2iv(this->m_programHandle, this->getUniformLocation(uniformName), 1, glm::value_ptr(value));
 	}
 
+	void OpenGLShaderProgram::loadVec3(const std::string& uniformName, const glm::vec3& value)
+	{
+		glProgramUniform3fv(this->m_programHandle, this->getUniformLocation(uniformName), 1, glm::value_ptr(value));
+	}
+
 	GLint OpenGLShaderProgram::getUniformLocation(const std::string& uniformName)
 	{
 		return this->m_locations[uniformName];

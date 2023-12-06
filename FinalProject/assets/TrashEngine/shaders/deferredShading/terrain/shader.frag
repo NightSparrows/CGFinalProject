@@ -46,9 +46,9 @@ void main() {
 	vec3 fragNormal = in_normal;
 	
 	float metallic = 0.0;
-	float roughness = 0.0;
+	float roughness = 1.0;
 	float ao = 1.0;
-	float emissive = 2.0;
+	float emissive = 0.0;
 	
 	// diffuse color
 	vec4 bgColor = texture(u_diffuseTextures[3], tiledCoords) * bgAmount;

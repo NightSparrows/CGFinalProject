@@ -54,6 +54,10 @@ namespace TrashEngine {
 		// raw scene texture
 		glCreateTextures(GL_TEXTURE_2D, 1, &this->m_rawSceneTexture);
 		glTextureStorage2D(this->m_rawSceneTexture, 1, GL_RGBA32F, this->m_renderSize.x, this->m_renderSize.y);
+		float borderColor[] = { 0,0 ,0,0 };
+		glTextureParameteri(this->m_rawSceneTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTextureParameteri(this->m_rawSceneTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTextureParameterfv(this->m_rawSceneTexture, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 		// point light creation
 		glCreateBuffers(1, &this->m_pointLightsStorageBuffer);
@@ -86,10 +90,14 @@ namespace TrashEngine {
 		// bloom pass creation
 		this->m_bloomPass = CreateScope<OpenGLBloomPass>(renderSize);
 		this->m_colorCorrectPass = CreateScope<OpenGLColorCorrectPass>(renderSize);
+
+		this->m_skyRenderer = CreateScope<OpenGLSkyRenderer>();
 	}
 
 	OpenGLMasterRenderer::~OpenGLMasterRenderer()
 	{
+		this->m_skyRenderer.reset();
+
 		this->m_colorCorrectPass.reset();
 		this->m_bloomPass.reset();
 
@@ -161,10 +169,10 @@ namespace TrashEngine {
 		ImGui::Begin("Bloom");
 		static float threshold = 1.f;
 		ImGui::Checkbox("Enable", &this->m_enableBloom);
-		ImGui::SliderFloat("Threshold", &threshold, 0, 10.f);
+		ImGui::DragFloat("Threshold", &threshold);
 		this->m_bloomPass->setThreshold(threshold);
-		static float intensity = 1.f;
-		ImGui::SliderFloat("Intensity", &intensity, 0, 10.f);
+		static float intensity = 0.05f;
+		ImGui::DragFloat("Intensity", &intensity);
 		this->m_bloomPass->setIntensity(intensity);
 		ImGui::End();
 
@@ -172,6 +180,16 @@ namespace TrashEngine {
 		static float exposure = 1.f;
 		ImGui::DragFloat("Exposure", &exposure);
 		this->m_colorCorrectPass->setExposure(exposure);
+		ImGui::End();
+
+		ImGui::Begin("Sky");
+		static float sunAngle = 1.f;
+		ImGui::DragFloat("Sun angle", &sunAngle);
+		this->m_skyRenderer->setSunAngle(sunAngle);
+		ImGui::DragFloat("planet radius", &this->m_skyRenderer->m_planetRadius);
+		ImGui::DragFloat("atmosphere radius", &this->m_skyRenderer->m_atmosphereRadius);
+		ImGui::DragFloat("simulate height", &this->m_skyRenderer->m_seeHeight);
+		ImGui::DragFloat3("sun color", glm::value_ptr(this->m_skyRenderer->m_sunColor));
 		ImGui::End();
 
 #endif // NS_DEBUG
@@ -198,6 +216,13 @@ namespace TrashEngine {
 		glNamedBufferSubData(this->m_pointLightsStorageBuffer, 0, sizeof(uint32_t), &numberOfPointLights);
 		glNamedBufferSubData(this->m_pointLightsStorageBuffer, 4 * sizeof(uint32_t), numberOfPointLights * sizeof(PointLight), pointLights.data());
 
+		// calculate sun light
+		this->m_sunLight.direction = -this->m_skyRenderer->getSunDirection();
+		float tmp = this->m_sunLight.direction.x;
+		this->m_sunLight.direction.x = this->m_sunLight.direction.z;
+		this->m_sunLight.direction.z = tmp;
+		this->m_sunLight.color = this->m_skyRenderer->m_sunColor;
+
 		// direction light
 		auto dirView = scene->Reg().view<DirectionLight>();
 		std::vector<DirectionLight> directionLights;
@@ -206,6 +231,8 @@ namespace TrashEngine {
 			if (directionLights.size() >= MAX_DIRECTION_LIGHTS)
 				break;
 		}
+		// add sun light
+		directionLights.emplace_back(this->m_sunLight);
 		uint32_t numberOfDirectionLight = (uint32_t)directionLights.size();
 		glNamedBufferSubData(this->m_directionLightsStorageBuffer, 0, sizeof(uint32_t), &numberOfDirectionLight);
 		glNamedBufferSubData(this->m_directionLightsStorageBuffer, 4 * sizeof(uint32_t), numberOfDirectionLight * sizeof(DirectionLight), directionLights.data());
@@ -284,9 +311,11 @@ namespace TrashEngine {
 		
 		// render non deferred object like skybox sun ... etc
 		glBindFramebuffer(GL_FRAMEBUFFER, this->m_forwardPassFramebuffer.handle);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
 		glNamedFramebufferTexture(this->m_forwardPassFramebuffer.handle, GL_DEPTH_ATTACHMENT, this->m_depthBufferTexture, 0);
 		glNamedFramebufferTexture(this->m_forwardPassFramebuffer.handle, GL_COLOR_ATTACHMENT0, drawTexture, 0);
 		// forward renderer drawing
+		this->m_skyRenderer->render();
 		/// TODO
 		/// end forward renderer drawing
 
