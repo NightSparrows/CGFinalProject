@@ -9,6 +9,7 @@
 #include "postProcessing/bloom/OpenGLBloomPass.h"
 #include "postProcessing/colorCorrect/OpenGLColorCorrectPass.h"
 #include "renderer/OpenGLSkyRenderer.h"
+#include "renderer/OpenGLParticleRenderer.h"
 #include <TrashEngine/scene/DirectionLight.h>
 
 #define MAX_POINT_LIGHTS	20000
@@ -34,8 +35,7 @@ namespace TrashEngine {
 		OpenGLMasterRenderer(glm::ivec2 renderSize);
 		~OpenGLMasterRenderer();
 
-
-		void renderFrame(Camera* camera, Scene* scene) override;
+		void renderFrame(Camera* camera, Scene* scene, Time deltaTime) override;
 
 	public:
 
@@ -74,6 +74,8 @@ namespace TrashEngine {
 	protected:
 
 		void prepareScene(Scene* scene);
+
+		void update(Camera* camera, Time deltaTime);
 
 		void renderScene(Camera* camera, glm::ivec2 renderSize, GLuint drawTexture);
 
@@ -120,8 +122,11 @@ namespace TrashEngine {
 		Scope<OpenGLTerrainRenderer> m_terrainRenderer;
 		// forward renderers
 		Scope<OpenGLSkyRenderer> m_skyRenderer;
+		Scope<OpenGLParticleRenderer> m_particleRenderer;
 		DirectionLight m_sunLight;
 		// end renderers
+		// renderer list
+		std::vector<OpenGLRenderer*> m_renderers;
 
 		//The variables that determine the size of the cluster grid. They're hand picked for now, but
 		//there is some space for optimization and tinkering as seen on the Olsson paper and the ID tech6

@@ -36,7 +36,9 @@ namespace TrashEngine {
 
 		// renderers init
 		this->m_staticModelRenderer = CreateScope<OpenGLStaticModelRenderer>();
+		//this->m_renderers.push_back(static_cast<OpenGLRenderer*>(this->m_staticModelRenderer.get()));
 		this->m_animatedModelRenderer = CreateScope<OpenGLAnimatedModelRenderer>();
+		this->m_renderers.push_back(static_cast<OpenGLRenderer*>(this->m_animatedModelRenderer.get()));
 		this->m_terrainRenderer = CreateScope<OpenGLTerrainRenderer>();
 		// end renderers init
 
@@ -92,10 +94,13 @@ namespace TrashEngine {
 		this->m_colorCorrectPass = CreateScope<OpenGLColorCorrectPass>(renderSize);
 
 		this->m_skyRenderer = CreateScope<OpenGLSkyRenderer>();
+		this->m_particleRenderer = CreateScope<OpenGLParticleRenderer>();
+		this->m_renderers.push_back(static_cast<OpenGLRenderer*>(this->m_particleRenderer.get()));
 	}
 
 	OpenGLMasterRenderer::~OpenGLMasterRenderer()
 	{
+		this->m_particleRenderer.reset();
 		this->m_skyRenderer.reset();
 
 		this->m_colorCorrectPass.reset();
@@ -126,7 +131,23 @@ namespace TrashEngine {
 		glDeleteTextures(1, &this->m_depthBufferTexture);
 	}
 
-	void OpenGLMasterRenderer::renderFrame(Camera* camera, Scene* scene)
+	void OpenGLMasterRenderer::update(Camera* camera, Time deltaTime)
+	{
+		// camera information to camera buffer
+		GlobalUBOData globalData{};
+		globalData.projectionMatrix = camera->getProjectionMatrix();
+		globalData.viewMatrix = camera->getViewMatrix();
+		globalData.inverseProjectionMatrix = glm::inverse(camera->getProjectionMatrix());
+		globalData.position = glm::vec4(camera->position, 0.f);
+		glNamedBufferSubData(this->m_globalUniformBuffer, 0, sizeof(GlobalUBOData), &globalData);
+		glBindBufferBase(GL_UNIFORM_BUFFER, 0, this->m_globalUniformBuffer);
+
+		for (auto renderer : this->m_renderers) {
+			renderer->update(camera, deltaTime);
+		}
+	}
+
+	void OpenGLMasterRenderer::renderFrame(Camera* camera, Scene* scene, Time deltaTime)
 	{
 		GLuint nextSceneTexture;
 		Time time = Time::GetTime();
@@ -137,6 +158,9 @@ namespace TrashEngine {
 
 
 		this->prepareScene(scene);
+
+		this->update(camera, deltaTime);
+
 		this->renderScene(camera, this->m_renderSize, this->m_rawSceneTexture);
 		nextSceneTexture = this->m_rawSceneTexture;
 
@@ -184,7 +208,7 @@ namespace TrashEngine {
 
 		ImGui::Begin("Sky");
 		static float sunAngle = 1.f;
-		ImGui::DragFloat("Sun angle", &sunAngle);
+		ImGui::DragFloat("Sun angle", &sunAngle, 0.1f, -360.f, 360.f);
 		this->m_skyRenderer->setSunAngle(sunAngle);
 		ImGui::DragFloat("planet radius", &this->m_skyRenderer->m_planetRadius);
 		ImGui::DragFloat("atmosphere radius", &this->m_skyRenderer->m_atmosphereRadius);
@@ -218,21 +242,21 @@ namespace TrashEngine {
 
 		// calculate sun light
 		this->m_sunLight.direction = -this->m_skyRenderer->getSunDirection();
-		float tmp = this->m_sunLight.direction.x;
-		this->m_sunLight.direction.x = this->m_sunLight.direction.z;
-		this->m_sunLight.direction.z = tmp;
+		//float tmp = this->m_sunLight.direction.x;
+		//this->m_sunLight.direction.x = this->m_sunLight.direction.z;
+		//this->m_sunLight.direction.z = tmp;
 		this->m_sunLight.color = this->m_skyRenderer->m_sunColor;
 
 		// direction light
 		auto dirView = scene->Reg().view<DirectionLight>();
 		std::vector<DirectionLight> directionLights;
+		// add sun light
+		directionLights.emplace_back(this->m_sunLight);
 		for (auto [entity, light] : dirView.each()) {
 			directionLights.emplace_back(light);
 			if (directionLights.size() >= MAX_DIRECTION_LIGHTS)
 				break;
 		}
-		// add sun light
-		directionLights.emplace_back(this->m_sunLight);
 		uint32_t numberOfDirectionLight = (uint32_t)directionLights.size();
 		glNamedBufferSubData(this->m_directionLightsStorageBuffer, 0, sizeof(uint32_t), &numberOfDirectionLight);
 		glNamedBufferSubData(this->m_directionLightsStorageBuffer, 4 * sizeof(uint32_t), numberOfDirectionLight * sizeof(DirectionLight), directionLights.data());
@@ -241,6 +265,7 @@ namespace TrashEngine {
 		this->m_staticModelRenderer->prepareScene(scene);
 		this->m_animatedModelRenderer->prepareScene(scene);
 		this->m_terrainRenderer->prepareScene(scene);
+		this->m_particleRenderer->prepareScene(scene);
 	}
 
 	void OpenGLMasterRenderer::renderScene(Camera* camera, glm::ivec2 renderSize, GLuint drawTexture)
@@ -316,6 +341,7 @@ namespace TrashEngine {
 		glNamedFramebufferTexture(this->m_forwardPassFramebuffer.handle, GL_COLOR_ATTACHMENT0, drawTexture, 0);
 		// forward renderer drawing
 		this->m_skyRenderer->render();
+		this->m_particleRenderer->render();
 		/// TODO
 		/// end forward renderer drawing
 

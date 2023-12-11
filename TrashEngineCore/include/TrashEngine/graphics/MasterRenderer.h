@@ -2,6 +2,7 @@
 
 #include "Camera.h"
 #include <TrashEngine/scene/Scene.h>
+#include <TrashEngine/core/Time.h>
 
 namespace TrashEngine {
 
@@ -15,7 +16,7 @@ namespace TrashEngine {
 		/// </summary>
 		/// <param name="camera"></param>
 		/// <returns></returns>
-		NS_API virtual void renderFrame(Camera* camera, Scene* scene) = 0;
+		NS_API virtual void renderFrame(Camera* camera, Scene* scene, Time deltaTime) = 0;
 
 	};
 

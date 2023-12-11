@@ -21,6 +21,8 @@ namespace TrashEngine {
 
 		Ref<Terrain> createTerrain(float heightIntensity, glm::ivec2 position) override;
 
+		Ref<Particle> createParticle(const std::string& filePath, uint32_t numberOfRow) override;
+
 		Ref<AnimatedModelAnimator> createAnimatedModelAnimator(Ref<AnimatedModel> animatedModel) override;
 
 		Ref<MasterRenderer> createMasterRenderer(glm::ivec2 renderSize) override;

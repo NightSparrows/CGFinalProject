@@ -1,4 +1,6 @@
 
+#include <execution>
+
 #include <TrashEngine/TrashEngine.h>
 #include <TrashEngine/scene/component/StaticModelComponent.h>
 #include "FinalProjectState.h"
@@ -10,6 +12,8 @@ TrashEngine::Entity testEntity;
 TrashEngine::Entity testEntity2;
 TrashEngine::Camera camera(1920.f / 1080.f, glm::radians(70.f), 0.1f, 9000.f);
 TrashEngine::Entity testLightEntity;
+
+TrashEngine::ParticleEmitterComponent* testParticleEmitterCom;
 
 FinalProjectState::FinalProjectState(TrashEngine::GameEngine* engine) : 
 	GameState("finalState"), m_engine(engine)
@@ -161,6 +165,21 @@ void FinalProjectState::onInit()
 	animatorCom.animator->setLooping("death", false);
 	animatorCom.animator->start("idle", 1.f);
 
+	/*for (uint32_t i = 0; i < 40; i++) {
+		auto testEntAnim = scene->createEntity();
+		auto& animModelC = testEntAnim.addComponent<TrashEngine::AnimatedModelComponent>();
+		animModelC.model = modelC.model;
+		auto& testAnimator = testEntAnim.addComponent<TrashEngine::AnimatedModelAnimatorComponent>();
+		testAnimator.animator = this->m_engine->getGraphicsContext()->createAnimatedModelAnimator(animModelC.model);
+		testAnimator.animator->addAnimation("walk", TrashEngine::ModelLoader::LoadAnimatedModelAnimationFromFile("res/archer/dae/archer_walk.dae"));
+
+		testAnimator.animator->start("walk", 1.f);
+		auto& testTransform = testEntAnim.getComponent<TrashEngine::TransformComponent>();
+		testTransform.transform.setPosition(glm::vec3(i, 0, 0));
+		testTransform.transform.rotate(glm::vec3(1, 0, 0), -90.f);
+		testAnimators.push_back(&testAnimator);
+	}*/
+
 	// test terrain
 	TrashEngine::TerrainMaterialData terrainData;
 	terrainData.blendMap = "res/terrain/blendMap.png";
@@ -182,22 +201,31 @@ void FinalProjectState::onInit()
 	testDirLight.color = glm::vec3(1.3f, 1.3f, 1.3f);
 	testDirLight.direction = glm::vec3(-0.5f, -0.5f, -0.5f);
 	*/
+	auto testParticleSystem = scene->createEntity();
+	testParticleEmitterCom = &testParticleSystem.addComponent<TrashEngine::ParticleEmitterComponent>();
+	testParticleEmitterCom->particle = this->m_engine->getGraphicsContext()->createParticle("res/particle/particleAtlas.png", 4);
 }
 
+float particleTime = 0;
 float testTime = 0;
 void FinalProjectState::onUpdate(TrashEngine::Time delta)
 {
-	auto& animatorCom = testEntity2.getComponent<TrashEngine::AnimatedModelAnimatorComponent>();
-	animatorCom.animator->update(delta);
+	particleTime += delta;
+	if (particleTime >= 0.001f) {
+		auto& newParticle = testParticleEmitterCom->startInfos.emplace_back();
+		newParticle.position = glm::vec3(0, 0, 0);
+		newParticle.velocity = glm::vec3((5 + 5) * ((float)std::rand() / (RAND_MAX + 1.0)) - 5.f, 10.f * ((float)std::rand() / (RAND_MAX + 1.0)) - 5.f, 10.f * ((float)std::rand() / (RAND_MAX + 1.0)) - 5.f);
+		newParticle.gravityEffect = 0;
+		newParticle.lifeLength = 10.f * (float)std::rand() / (RAND_MAX + 1.0) + 5.f;
+		newParticle.rotation = 0;
+		newParticle.scale = glm::vec2((float)std::rand() / (RAND_MAX + 1.0));
+		particleTime = 0;
+	}
 
 	auto& light = testLightEntity.getComponent<TrashEngine::PointLight>();
 
 	light.position.x = sin(testTime) * 50.f;
 	testTime += delta;
-
-	//auto& entTransform = testEntity.getComponent<TrashEngine::TransformComponent>().transform;
-	
-	//entTransform.setRotation(glm::rotate(entTransform.getRotation(), delta * 1.f, glm::vec3(0, 1, 0)));
 
 	const float speed = 25.f;
 	glm::vec3 vector = glm::vec3(0);
@@ -241,5 +269,5 @@ void FinalProjectState::onCleanUp()
 
 void FinalProjectState::onRender(TrashEngine::Time time)
 {
-	masterRenderer->renderFrame(&camera, scene.get());
+	masterRenderer->renderFrame(&camera, scene.get(), time);
 }

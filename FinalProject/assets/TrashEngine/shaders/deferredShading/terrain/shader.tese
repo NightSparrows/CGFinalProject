@@ -55,7 +55,7 @@ void main() {
 	out_position = pos;
 	
 	//vec3 normal = (2.0 * texture(u_normalMap, texCoord) - 1).rgb;
-	vec3 normal = (2.0 * texture(u_normalMap, texCoord) - 1).gbr;		// because normal is point upward
+	vec3 normal = (2.0 * texture(u_normalMap, texCoord) - 1).rbg;		// because normal is point upward
 	out_normal = normalize(normal);
 
 	

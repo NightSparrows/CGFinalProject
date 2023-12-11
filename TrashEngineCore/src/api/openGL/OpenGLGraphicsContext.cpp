@@ -10,6 +10,7 @@
 #include "OpenGLStaticModel.h"
 #include "OpenGLMasterRenderer.h"
 #include "model/terrain/OpenGLTerrain.h"
+#include "model/particle/OpenGLParticle.h"
 
 namespace TrashEngine {
     
@@ -26,6 +27,11 @@ namespace TrashEngine {
     Ref<Terrain> OpenGLGraphicsContext::createTerrain(float heightIntensity, glm::ivec2 position)
     {
         return CreateRef<OpenGLTerrain>(this->m_normalMapGenerator.get(), heightIntensity, position);
+    }
+
+    Ref<Particle> OpenGLGraphicsContext::createParticle(const std::string& filePath, uint32_t numberOfRow)
+    {
+        return CreateRef<OpenGLParticle>(filePath, numberOfRow);
     }
 
     Ref<AnimatedModelAnimator> OpenGLGraphicsContext::createAnimatedModelAnimator(Ref<AnimatedModel> animatedModel)

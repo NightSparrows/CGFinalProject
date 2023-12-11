@@ -36,6 +36,10 @@ namespace TrashEngine {
 		}
 		glCreateTextures(GL_TEXTURE_2D, 1, &this->m_resultTexture);
 		glTextureStorage2D(this->m_resultTexture, 1, GL_RGBA32F, sceneSize.x, sceneSize.y);
+		glTextureParameteri(this->m_resultTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTextureParameteri(this->m_resultTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		GLfloat color[] = { 0, 0, 0, 0 };
+		glTextureParameterfv(this->m_resultTexture, GL_TEXTURE_BORDER_COLOR, color);
 
 	}
 

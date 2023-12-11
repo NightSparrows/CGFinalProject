@@ -1,7 +1,6 @@
 #include "nspch.h"
 #include <TrashEngine/scene/component/TransformComponent.h>
 #include <TrashEngine/scene/component/AnimatedModelComponent.h>
-#include <TrashEngine/scene/component/AnimatedModelAnimatorComponent.h>
 #include <api/openGL/builder/OpenGLShaderProgramBuilder.h>
 #include "OpenGLAnimatedModelRenderer.h"
 
@@ -37,13 +36,22 @@ namespace TrashEngine {
 	void OpenGLAnimatedModelRenderer::prepareScene(Scene* scene)
 	{
 		this->m_instances.clear();
+		this->m_animatorComponents.clear();
 		auto view = scene->Reg().view<TransformComponent, AnimatedModelAnimatorComponent>();
 		for (auto [entity, transform, animator] : view.each()) {
 			Ref<OpenGLAnimatedModelAnimator> ogAnimator = StaticCastRef<OpenGLAnimatedModelAnimator>(animator.animator);
 			auto& instanceData = this->m_instances.emplace_back();
 			instanceData.transformationMatrix = transform.transform;
 			instanceData.animator = ogAnimator;
+			this->m_animatorComponents.emplace_back(&animator);
 		}
+	}
+
+	void OpenGLAnimatedModelRenderer::update(Camera* camera, Time deltaTime)
+	{
+		std::for_each(std::execution::par, this->m_animatorComponents.begin(), this->m_animatorComponents.end(), [deltaTime](AnimatedModelAnimatorComponent* animatorCom) {
+			animatorCom->animator->update(deltaTime);
+			});
 	}
 
 	void OpenGLAnimatedModelRenderer::render()

@@ -1,0 +1,98 @@
+#version 450
+
+#pragma pack(push, 1)
+struct ParticleData {
+	vec4 data[3];
+/*
+	vec3 position;
+	float gravityEffect;
+	vec3 velocity;
+	float rotation;
+	float scale;
+
+	float lifeLength;		// this particle life length
+	float elaspedTime;		// this particle current life
+	float blank;
+*/
+};
+
+#pragma pack(push, 1)
+struct ParticleInstanceData
+{
+	mat4 transformationMatrix;
+	vec4 texOffsets;					// texture offset0, texture offset1
+	float blend;						// how to blend texcoord0 to texcoord1
+};
+
+// binding global uniform buffer for
+layout (binding = 0) uniform globalBuffer {
+	mat4 projectionMatrix;
+	mat4 viewMatrix;
+	mat4 inverseProjectionMatrix;
+	vec4 cameraPosition;
+}GlobalUbo;
+
+layout (binding = 1) buffer particleDataBuffer {
+	ParticleData particleDataList[];
+};
+
+layout (binding = 2) buffer particleInstanceBuffer {
+	ParticleInstanceData instanceDataList[];
+};
+
+uniform uint u_particleCount;
+
+uniform float u_deltaTime;
+
+const float u_gravity = 10.0;
+
+mat4 translateMatrix(mat4 originalMatrix, vec3 translation) {
+    // Create a translation matrix
+    mat4 translationMatrix = mat4(1.0);
+    translationMatrix[3] = vec4(translation, 1.0);
+
+    // Multiply the original matrix by the translation matrix
+    return originalMatrix * translationMatrix;
+}
+// glDispatchCompute(particleCount / 1024, 1, 1);
+layout (local_size_x = 1024) in;
+void main() {
+
+	for(uint i = gl_GlobalInvocationID.x; i < u_particleCount; i += 1024) {
+		float elaspedTime = particleDataList[i].data[2].z;
+		vec3 position = particleDataList[i].data[0].xyz;
+		vec3 velocity = particleDataList[i].data[1].xyz;
+		float gravityEffect = particleDataList[i].data[0].w;
+		
+		elaspedTime += u_deltaTime;
+		position += velocity * u_deltaTime;
+		velocity.y -= u_gravity * gravityEffect * u_deltaTime;
+
+		mat4 transMatrix = translateMatrix(mat4(1.0), position);
+		// build transformationMatrix
+
+		//mat4 scaleMatrix = mat4(
+		//	vec4(particleDataList[i].scale, 0.0, 0.0, 0.0),
+		//	vec4(0.0, particleDataList[i].scale, 0.0, 0.0),
+		//	vec4(0.0, 0.0, particleDataList[i].scale, 0.0),
+		//	vec4(0.0, 0.0, 0.0, 1.0)
+		//);
+		//float cosA = cos(particleDataList[i].rotation);
+		//float sinA = sin(particleDataList[i].rotation);
+		//mat4 rotationMatrix = mat4(
+		//	vec4(cosA, sinA, 0.0, 0.0),
+		//	vec4(-sinA, cosA, 0.0, 0.0),
+		//	vec4(0.0, 0.0, 1.0, 0.0),
+		//	vec4(0.0, 0.0, 0.0, 1.0)
+		//);
+		//instanceDataList[i].transformationMatrix = instanceDataList[i].transformationMatrix/* * rotationMatrix * scaleMatrix*/; 
+		
+		particleDataList[i].data[2].z = elaspedTime;
+		particleDataList[i].data[0].xyz = position;
+		particleDataList[i].data[1].xyz = velocity;
+		particleDataList[i].data[2].w = i;
+		instanceDataList[i].transformationMatrix = transMatrix;
+	}
+
+}
+

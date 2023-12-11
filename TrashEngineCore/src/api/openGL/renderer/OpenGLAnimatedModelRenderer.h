@@ -8,6 +8,7 @@
 #include <api/openGL/objects/OpenGLShaderProgram.h>
 #include <api/openGL/model/animated/OpenGLAnimatedModel.h>
 #include <api/openGL/model/animated/OpenGLAnimatedModelAnimator.h>
+#include <TrashEngine/scene/component/AnimatedModelAnimatorComponent.h>
 
 namespace TrashEngine {
 
@@ -18,6 +19,8 @@ namespace TrashEngine {
 		~OpenGLAnimatedModelRenderer();
 
 		void prepareScene(Scene* scene) override;
+
+		void update(Camera* camera, Time deltaTime) override;
 
 		void render() override;
 
@@ -50,6 +53,7 @@ namespace TrashEngine {
 
 		GLuint m_materialStorageBuffer;
 		std::vector<InstanceData> m_instances;
+		std::vector<AnimatedModelAnimatorComponent*> m_animatorComponents;
 
 		GLuint m_boneTransformStorageBuffer;
 	};

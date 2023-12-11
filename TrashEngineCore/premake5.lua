@@ -4,7 +4,7 @@ project "TrashEngineCore"
 	language "C++"
 	kind "SharedLib"
 	staticruntime "off"
-	cppdialect "C++17"
+	cppdialect "C++20"
 	
 	defines {
 		"NS_BUILD_SHARED",

@@ -43,6 +43,7 @@ void main() {
         vec4 center2 = gl_in[2].gl_Position + (gl_in[1].gl_Position - gl_in[2].gl_Position) / 2.0; // right side
         vec4 center3 = gl_in[3].gl_Position + (gl_in[2].gl_Position - gl_in[3].gl_Position) / 2.0; // top side
 
+
 		gl_TessLevelOuter[0] = LodFactor(length(GlobalUbo.cameraPosition.xyz - center0.xyz));
 		gl_TessLevelOuter[1] = LodFactor(length(GlobalUbo.cameraPosition.xyz - center1.xyz));
 		gl_TessLevelOuter[2] = LodFactor(length(GlobalUbo.cameraPosition.xyz - center2.xyz));
@@ -50,6 +51,7 @@ void main() {
 
 		gl_TessLevelInner[0] = (gl_TessLevelOuter[1] + gl_TessLevelOuter[3]) / 4;
 		gl_TessLevelInner[1] = (gl_TessLevelOuter[0] + gl_TessLevelOuter[2]) / 4;
+
 	}
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 	out_texCoords[gl_InvocationID] = in_texCoords[gl_InvocationID];
