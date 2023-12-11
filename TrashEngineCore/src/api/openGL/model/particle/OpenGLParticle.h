@@ -38,6 +38,7 @@ namespace TrashEngine {
 	{
 	public:
 		OpenGLParticle(const std::string textureFilePath, uint32_t numberOfRow);
+		~OpenGLParticle();
 
 		OpenGLTexture* getTexture() { return this->m_texture.get(); }
 
@@ -49,6 +50,17 @@ namespace TrashEngine {
 
 		uint32_t m_numberOfRow{ 0 };
 
+		/// <summary>
+		/// the maximum number of particle that this prototype can be display
+		/// For testing just set to 1000 for now
+		/// </summary>
+		uint32_t m_maxNumberOfParticle{ 1000 };
+
+		/// <summary>
+		/// The particle data buffer
+		/// storing alive or idle particle information data
+		/// </summary>
+		GLuint m_dataBuffer;
 	};
 
 }

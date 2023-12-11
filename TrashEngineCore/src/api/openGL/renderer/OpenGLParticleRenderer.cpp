@@ -121,9 +121,8 @@ namespace TrashEngine {
 				return data.lifeLength < data.elaspedTime;
 				});
 
-			std::ranges::iota_view indexes((size_t)0, list.size());
 			instanceList.resize(list.size());
-			std::for_each(std::execution::par, indexes.begin(), indexes.end(), [&list, particle, deltaTime, &instanceList](size_t i) {
+			for (uint32_t i = 0; i < list.size(); i++) {
 
 				ParticleData& data = list[i];
 				// update texture coord
@@ -144,7 +143,7 @@ namespace TrashEngine {
 					glm::vec2 texOffset2 = calcTextureOffset(index2, particle->getNumberOfRow());
 					instanceData.texOffsets = glm::vec4(texOffset1.x, texOffset1.y, texOffset2.x, texOffset2.y);
 				}
-				});
+			}
 
 			std::sort(instanceList.begin(), instanceList.end(), [&camera](const ParticleInstanceData& a, const ParticleInstanceData& b) {
 				return glm::length(a.position - camera->position) > glm::length(b.position - camera->position);
@@ -172,7 +171,7 @@ namespace TrashEngine {
 		for (auto& [particle, list] : this->m_particles) {
 			if (particle->getTexture() != nullptr) {
 				particle->getTexture()->bindUnit(0);
-				this->m_shader->loadFloat("u_numberOfRow", particle->getNumberOfRow());
+				this->m_shader->loadFloat("u_numberOfRow", (float)particle->getNumberOfRow());
 			}
 			if (instanceOffset + (uint32_t)list.size() > MAX_PARTICLE_COUNT)
 				break;

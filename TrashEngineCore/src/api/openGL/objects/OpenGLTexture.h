@@ -32,10 +32,10 @@ namespace TrashEngine {
 		inline GLuint getHandle() { return this->m_textureHandle; }
 
 	private:
-		GLuint m_textureHandle;
+		GLuint m_textureHandle{ 0 };
 
-		uint32_t m_width;
-		uint32_t m_height;
+		uint32_t m_width{ 0 };
+		uint32_t m_height{ 0 };
 
 	};
 

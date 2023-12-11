@@ -67,8 +67,8 @@ float linearDepth(float depthSample){
 const uint gridSizeX = 16;
 const uint gridSizeY = 9;
 const uint gridSizeZ = 24;
-const float zNear = 0.1f;
-const float zFar = 1000f;
+const float zNear = 0.1;
+const float zFar = 1000;
 const uint sizeX = uint(ceil(1280.0 / float(gridSizeX)));
 
 struct Material {

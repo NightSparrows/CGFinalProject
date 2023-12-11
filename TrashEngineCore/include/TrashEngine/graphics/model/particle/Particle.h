@@ -6,6 +6,7 @@ namespace TrashEngine {
 
 	/**
 	* The prototype of a particle
+	* will store the max particle count to this particle prototype
 	*/
 	class Particle
 	{
