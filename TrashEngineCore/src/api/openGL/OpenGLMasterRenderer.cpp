@@ -167,7 +167,9 @@ namespace TrashEngine {
 		if (this->m_enableBloom) {
 			nextSceneTexture = this->m_bloomPass->renderBloom(nextSceneTexture);
 		}
-		nextSceneTexture = this->m_colorCorrectPass->renderPass(nextSceneTexture);
+		if (this->m_enableColorCorrect) {
+			nextSceneTexture = this->m_colorCorrectPass->renderPass(nextSceneTexture);
+		}
 
 		// draw to screen
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -201,6 +203,7 @@ namespace TrashEngine {
 		ImGui::End();
 
 		ImGui::Begin("Color correction");
+		ImGui::Checkbox("Enable", &this->m_enableColorCorrect);
 		static float exposure = 1.f;
 		ImGui::DragFloat("Exposure", &exposure);
 		this->m_colorCorrectPass->setExposure(exposure);

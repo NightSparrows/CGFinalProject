@@ -108,6 +108,7 @@ namespace TrashEngine {
 		bool m_enableBloom{ true };
 		Scope<OpenGLBloomPass> m_bloomPass;
 
+		bool m_enableColorCorrect{ true };
 		Scope<OpenGLColorCorrectPass> m_colorCorrectPass;
 
 		// present to screen program

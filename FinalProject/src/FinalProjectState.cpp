@@ -210,7 +210,6 @@ float particleTime = 0;
 float testTime = 0;
 void FinalProjectState::onUpdate(TrashEngine::Time delta)
 {
-	/*
 	particleTime += delta;
 	if (particleTime >= 0.001f) {
 		auto& newParticle = testParticleEmitterCom->startInfos.emplace_back();
@@ -221,7 +220,7 @@ void FinalProjectState::onUpdate(TrashEngine::Time delta)
 		newParticle.rotation = 0;
 		newParticle.scale = glm::vec2((float)std::rand() / (RAND_MAX + 1.0));
 		particleTime = 0;
-	}*/
+	}
 
 	auto& light = testLightEntity.getComponent<TrashEngine::PointLight>();
 
