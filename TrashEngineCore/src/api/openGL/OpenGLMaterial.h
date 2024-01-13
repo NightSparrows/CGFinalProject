@@ -27,6 +27,9 @@ namespace TrashEngine {
 		bool loadMetallicTexture(const std::string& filePath);
 		OpenGLTexture* getMetallicTexture() { return this->m_metallicTexture.get(); }
 
+		bool loadRoughnessTexture(const std::string& filePath);
+		OpenGLTexture* getRoughnessTexture() { return this->m_roughnessTexture.get(); }
+
 		inline float getAO() const { return this->m_ao; }
 
 		inline float getRoughness() const { return this->m_roughnesss; }

@@ -34,6 +34,8 @@ layout (std430, binding = 1) buffer material {
 
 layout(location = 0) uniform sampler2D diffuseSampler;
 layout(location = 1) uniform sampler2D normalTextureSampler;
+layout(location = 2) uniform sampler2D metallicTextureSampler;
+layout(location = 3) uniform sampler2D roughnessTextureSampler;
 
 void main() {
 
@@ -68,10 +70,20 @@ void main() {
 	} else {
 		fragNormal = vs_normal;
 	}
+
+	float materialMetallic = material.metallic;
+	if (material.hasMetallicTexture > 0) {
+		materialMetallic = texture(metallicTextureSampler, texCoord).r;
+	}
+
+	float materialRoughness = material.roughness;
+	if (material.hasRoughnessTexture > 0) {
+		materialRoughness = texture(roughnessTextureSampler, texCoord).r;
+	}
 	
 	out_GBuffer0 = vec4(fragPos, fragNormal.x);
 	out_GBuffer1 = vec4(fragNormal.yz, diffuseColor.xy);
-	out_GBuffer2 = vec4(diffuseColor.z, material.metallic, material.roughness, material.ao);
+	out_GBuffer2 = vec4(diffuseColor.z, materialMetallic, materialRoughness, material.ao);
 	out_GBuffer3 = vec4(material.emissive, 0, 0, 0);
 	
 }

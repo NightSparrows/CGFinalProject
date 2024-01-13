@@ -33,6 +33,14 @@ namespace TrashEngine {
 			if (!materialData.normalTexture.empty()) {
 				material->loadNormalTexture(materialData.normalTexture);
 			}
+
+			if (!materialData.metallicTexture.empty()) {
+				material->loadMetallicTexture(materialData.metallicTexture);
+			}
+
+			if (!materialData.roughnessTexture.empty()) {
+				material->loadRoughnessTexture(materialData.roughnessTexture);
+			}
 			
 			this->m_materials.emplace_back(std::move(material));
 		}

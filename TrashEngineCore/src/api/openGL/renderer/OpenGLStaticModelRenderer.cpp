@@ -18,6 +18,8 @@ namespace TrashEngine {
 		this->m_tiModelMatrixLocation = this->m_shader->getUniformLocationFromName("u_tiModelMatrix");
 		this->m_shader->load(this->m_shader->getUniformLocationFromName("diffuseSampler"), 0);
 		this->m_shader->load(this->m_shader->getUniformLocationFromName("normalTextureSampler"), 1);
+		this->m_shader->load(this->m_shader->getUniformLocationFromName("metallicTextureSampler"), 2);
+		this->m_shader->load(this->m_shader->getUniformLocationFromName("roughnessTextureSampler"), 3);
 
 		glCreateBuffers(1, &this->m_materialStorageBuffer);
 		glNamedBufferStorage(this->m_materialStorageBuffer, sizeof(MaterialData), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
@@ -63,6 +65,17 @@ namespace TrashEngine {
 						mesh.material->getNormalTexture()->bindUnit(1);
 						materialData.hasNormalTexture = 1;
 					}
+					materialData.hasMetallicTexture = 0;
+					if (mesh.material->getMetallicTexture() != nullptr) {
+						mesh.material->getMetallicTexture()->bindUnit(2);
+						materialData.hasMetallicTexture = 1;
+					}
+					materialData.hasRoughnessTexture = 0;
+					if (mesh.material->getRoughnessTexture() != nullptr) {
+						mesh.material->getRoughnessTexture()->bindUnit(3);
+						materialData.hasRoughnessTexture = 1;
+					}
+
 					materialData.ao = mesh.material->getAO();
 					materialData.roughness = mesh.material->getRoughness();
 					materialData.metallic = mesh.material->getMetallic();

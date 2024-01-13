@@ -50,4 +50,20 @@ namespace TrashEngine {
 		return result;
 	}
 
+	bool OpenGLMaterial::loadRoughnessTexture(const std::string& filePath)
+	{
+		this->m_roughnessTexture = CreateScope<OpenGLTexture>();
+
+		OpenGLTexture::TextureConfig config;
+		config.anisotropicFiltering = true;
+		config.mipMapping = true;
+
+		bool result = this->m_roughnessTexture->loadTexture2D(filePath, config);
+		if (!result) {
+			this->m_roughnessTexture.reset();
+		}
+
+		return result;
+	}
+
 }

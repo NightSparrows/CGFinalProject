@@ -96,10 +96,15 @@ namespace TrashEngine {
 		this->m_skyRenderer = CreateScope<OpenGLSkyRenderer>();
 		this->m_particleRenderer = CreateScope<OpenGLParticleRenderer>();
 		this->m_renderers.push_back(static_cast<OpenGLRenderer*>(this->m_particleRenderer.get()));
+
+		// shadow
+		this->m_shadowRenderer = CreateScope<OpenGLShadowRenderer>();
 	}
 
 	OpenGLMasterRenderer::~OpenGLMasterRenderer()
 	{
+		this->m_shadowRenderer.reset();
+
 		this->m_particleRenderer.reset();
 		this->m_skyRenderer.reset();
 
@@ -269,6 +274,7 @@ namespace TrashEngine {
 		this->m_animatedModelRenderer->prepareScene(scene);
 		this->m_terrainRenderer->prepareScene(scene);
 		this->m_particleRenderer->prepareScene(scene);
+		this->m_shadowRenderer->prepareScene(scene);
 	}
 
 	void OpenGLMasterRenderer::renderScene(Camera* camera, glm::ivec2 renderSize, GLuint drawTexture)
@@ -281,6 +287,11 @@ namespace TrashEngine {
 		globalData.position = glm::vec4(camera->position, 0.f);
 		glNamedBufferSubData(this->m_globalUniformBuffer, 0, sizeof(GlobalUBOData), &globalData);
 		glBindBufferBase(GL_UNIFORM_BUFFER, 0, this->m_globalUniformBuffer);
+
+		// shadow pass
+		this->m_shadowRenderer->setSunLight(this->m_sunLight);
+		this->m_shadowRenderer->setCamera(camera);
+		this->m_shadowRenderer->render();
 
 		// start rendering on screen
 		glBindFramebuffer(GL_FRAMEBUFFER, this->m_deferredPassFramebuffer.handle);

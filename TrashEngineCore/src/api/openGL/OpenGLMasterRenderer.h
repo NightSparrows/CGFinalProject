@@ -11,6 +11,7 @@
 #include "renderer/OpenGLSkyRenderer.h"
 #include "renderer/OpenGLParticleRenderer.h"
 #include <TrashEngine/scene/DirectionLight.h>
+#include "renderer/OpenGLShadowRenderer.h"
 
 #define MAX_POINT_LIGHTS	20000
 #define MAX_DIRECTION_LIGHTS	8
@@ -93,6 +94,8 @@ namespace TrashEngine {
 		GLuint m_pointLightsStorageBuffer;
 		GLuint m_directionLightsStorageBuffer;
 
+
+
 		// the full render pass using depth buffer
 		// deferred and none deferred
 		GLuint m_depthBufferTexture;
@@ -117,6 +120,7 @@ namespace TrashEngine {
 		// raw scene that not been post process
 		GLuint m_rawSceneTexture;
 
+		Scope<OpenGLShadowRenderer> m_shadowRenderer;
 		// renderers
 		Scope<OpenGLStaticModelRenderer> m_staticModelRenderer;
 		Scope<OpenGLAnimatedModelRenderer> m_animatedModelRenderer;

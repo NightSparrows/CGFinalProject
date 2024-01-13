@@ -55,7 +55,7 @@ void FinalProjectState::onEvent(TrashEngine::Event& evnt)
 
 void FinalProjectState::onInit()
 {
-	camera.position.z += 20.f;
+	camera.position = glm::vec3(400, 0, 425);
 	camera.updateViewMatrix();
 
 	scene = TrashEngine::CreateRef<TrashEngine::Scene>();
@@ -63,7 +63,6 @@ void FinalProjectState::onInit()
 	masterRenderer = this->m_engine->getGraphicsContext()->createMasterRenderer(glm::ivec2(this->m_engine->getWindow()->getWidth(), this->m_engine->getWindow()->getHeight()));
 	
 	// test entity
-	/*
 	TrashEngine::Ref<TrashEngine::StaticModelData> modelData = TrashEngine::CreateRef<TrashEngine::StaticModelData>();
 	modelData->vertices.resize(4);
 	float size = 50.f;
@@ -86,17 +85,29 @@ void FinalProjectState::onInit()
 	modelData->indices = { 0, 1, 3, 3, 1, 2 };
 	modelData->materials.resize(1);
 	modelData->materials[0].diffuseColor = glm::vec3(1, 0, 1);
+	//modelData->materials[0].diffuseTexture = "res/AlMaterial/Aluminium 6_baseColor.jpeg";
+	//modelData->materials[0].normalTexture = "res/AlMaterial/Aluminium 6_normal.jpeg";
+	//modelData->materials[0].metallicTexture = "res/AlMaterial/Aluminium 6_metallic.jpeg";
+	//modelData->materials[0].roughnessTexture = "res/AlMaterial/Aluminium 6_roughness.jpeg";
 	modelData->materials[0].diffuseTexture = "res/wallDiffuse.png";
 	modelData->materials[0].normalTexture = "res/wallNormal.png";
-	modelData->materials[0].diffuse = glm::vec3(1);
-	modelData->materials[0].ambient = glm::vec3(0);
-	modelData->materials[0].specular = glm::vec3(0.5);
-	modelData->materials[0].shininess = 10.f;
-	modelData->materials[0].reflectivity = 1.f;
+	////modelData->materials[0].diffuse = glm::vec3(1);
+	////modelData->materials[0].ambient = glm::vec3(0);
+	////modelData->materials[0].specular = glm::vec3(0.5);
+	////modelData->materials[0].shininess = 10.f;
+	////modelData->materials[0].reflectivity = 1.f;
 	modelData->meshes.resize(1);
 	modelData->meshes[0].indexCount = 6;
 	modelData->meshes[0].materialIndex = 0;
-	*/
+
+	testEntity = scene->createEntity("testAlWall");
+	testEntity.getComponent<TrashEngine::TransformComponent>().transform.setPosition(glm::vec3(400, 0, 400));
+	//auto testModel3Data = TrashEngine::ModelLoader::LoadStaticModelFromFile("res/test/Street environment_V01.obj", "res/test/textures");
+	auto& testEntityAlWallModelCom = testEntity.addComponent<TrashEngine::StaticModelComponent>();
+	testEntityAlWallModelCom.model = this->m_engine->getGraphicsContext()->createStaticModel();
+	testEntityAlWallModelCom.model->loadData(modelData.get());
+
+
 	/*
 	TrashEngine::Ref<TrashEngine::StaticModelData> modelData = TrashEngine::ModelLoader::LoadStaticModelFromFile("res/sponza/sponza.obj", "res/sponza");
 	testModel = this->m_engine->getGraphicsContext()->createStaticModel();
@@ -109,7 +120,7 @@ void FinalProjectState::onInit()
 	*/
 	testLightEntity = scene->createEntity("Light");
 	auto& lightCom = testLightEntity.addComponent<TrashEngine::PointLight>();
-	lightCom.position = glm::vec3(5, 5, 10);
+	lightCom.position = glm::vec3(405, 5, 410);
 	lightCom.enabled = 1.f;
 	lightCom.color = glm::vec3(1.f, 1.f, 1.f);
 	lightCom.attenuation.x = 1.f;
@@ -120,7 +131,7 @@ void FinalProjectState::onInit()
 	
 	auto testLightEntity2 = scene->createEntity("Light2");
 	auto& lightCom2 = testLightEntity2.addComponent<TrashEngine::PointLight>();
-	lightCom2.position = glm::vec3(5, 10, 10);
+	lightCom2.position = glm::vec3(405, 10, 410);
 	lightCom2.enabled = 1.f;
 	lightCom2.color = glm::vec3(1.f, 0.f, 0.f);
 	lightCom2.attenuation.x = 1.f;
@@ -133,7 +144,7 @@ void FinalProjectState::onInit()
 		for (uint32_t x = 0; x < 10; x++) {
 			auto testLightEnt = scene->createEntity("testLight");
 			auto& lightC = testLightEnt.addComponent<TrashEngine::PointLight>();
-			lightC.position = glm::vec3((float)x * 5.f - 50.f, (float)y * 5.f - 50.f, 2);
+			lightC.position = glm::vec3((float)x * 5.f - 50.f + 400.f, (float)y * 5.f, 402);
 			lightC.enabled = 1.f;
 			lightC.color = glm::vec3((float)x / 20.f, y / 20.f, 0);
 			lightC.attenuation.x = 1.f;
@@ -153,7 +164,7 @@ void FinalProjectState::onInit()
 	modelC.model = this->m_engine->getGraphicsContext()->createAnimatedModel();
 	modelC.model->loadData(testAnimatedModelData.get());
 	auto& testEnt2Transform = testEntity2.getComponent<TrashEngine::TransformComponent>();
-	testEnt2Transform.transform.setPosition(glm::vec3(-25, 0, 0));
+	testEnt2Transform.transform.setPosition(glm::vec3(425, -3.f, 425));
 	testEnt2Transform.transform.rotate(glm::vec3(1, 0, 0), -90.f);
 	auto& animatorCom = testEntity2.addComponent<TrashEngine::AnimatedModelAnimatorComponent>();
 	animatorCom.animator = this->m_engine->getGraphicsContext()->createAnimatedModelAnimator(modelC.model);
@@ -188,11 +199,20 @@ void FinalProjectState::onInit()
 	terrainData.materialData[1].diffuseTexture = "res/terrain/g.png";
 	terrainData.materialData[2].diffuseTexture = "res/terrain/b.png";
 	terrainData.materialData[3].diffuseTexture = "res/terrain/back.png";
-	auto testTerrainEntity = scene->createEntity("test Terrain");
-	auto& testTerrainCom = testTerrainEntity.addComponent<TrashEngine::TerrainComponent>();
-	testTerrainCom.terrain = this->m_engine->getGraphicsContext()->createTerrain(50, glm::ivec2(0, 0));
-	testTerrainCom.terrain->loadHeightMap("res/terrain/heightMap.png");
-	testTerrainCom.terrain->loadMaterial(terrainData);
+	//auto testTerrainEntity = scene->createEntity("test Terrain");
+	//auto& testTerrainCom = testTerrainEntity.addComponent<TrashEngine::TerrainComponent>();
+	//testTerrainCom.terrain = this->m_engine->getGraphicsContext()->createTerrain(50, glm::ivec2(0, 0));
+	//testTerrainCom.terrain->loadHeightMap("res/terrain/heightMap.png");
+	//testTerrainCom.terrain->loadMaterial(terrainData);
+
+	for (uint32_t i = 0; i < 4; i++) {
+		auto testTerrainEntity = scene->createEntity("test Terrain");
+		auto& testTerrainCom = testTerrainEntity.addComponent<TrashEngine::TerrainComponent>();
+		testTerrainCom.terrain = this->m_engine->getGraphicsContext()->createTerrain(50, glm::ivec2(i / 2, i % 2));
+		testTerrainCom.terrain->loadHeightMap("res/terrain/heightMap.png");
+		testTerrainCom.terrain->loadMaterial(terrainData);
+
+	}
 
 	// test direction light
 	/*
@@ -204,21 +224,32 @@ void FinalProjectState::onInit()
 	auto testParticleSystem = scene->createEntity();
 	testParticleEmitterCom = &testParticleSystem.addComponent<TrashEngine::ParticleEmitterComponent>();
 	testParticleEmitterCom->particle = this->m_engine->getGraphicsContext()->createParticle("res/particle/particleAtlas.png", 4);
+
+	//auto testEntity3 = scene->createEntity("test3");
+	//auto testModel3Data = TrashEngine::ModelLoader::LoadStaticModelFromFile("res/test/Street environment_V01.obj", "res/test/textures");
+	//auto& entModel3Com = testEntity3.addComponent<TrashEngine::StaticModelComponent>();
+	//entModel3Com.model = this->m_engine->getGraphicsContext()->createStaticModel();
+	//entModel3Com.model->loadData(testModel3Data.get());
+
+
 }
 
 float particleTime = 0;
 float testTime = 0;
 void FinalProjectState::onUpdate(TrashEngine::Time delta)
 {
+	//auto& transCom = testEntity.getComponent<TrashEngine::TransformComponent>();
+	//transCom.transform.rotate(glm::vec3(1, 0, 0), 25.f * delta);
+
 	particleTime += delta;
 	if (particleTime >= 0.001f) {
 		auto& newParticle = testParticleEmitterCom->startInfos.emplace_back();
-		newParticle.position = glm::vec3(0, 0, 0);
-		newParticle.velocity = glm::vec3((5 + 5) * ((float)std::rand() / (RAND_MAX + 1.0)) - 5.f, 10.f * ((float)std::rand() / (RAND_MAX + 1.0)) - 5.f, 10.f * ((float)std::rand() / (RAND_MAX + 1.0)) - 5.f);
+		newParticle.position = glm::vec3(400, 10, 400);
+		newParticle.velocity = glm::vec3((5 + 5) * ((float)std::rand() / (RAND_MAX + 1.0f)) - 5.f, 10.f * ((float)std::rand() / (RAND_MAX + 1.0f)) - 5.f, 10.f * ((float)std::rand() / (RAND_MAX + 1.0f)) - 5.f);
 		newParticle.gravityEffect = 0;
-		newParticle.lifeLength = 10.f * (float)std::rand() / (RAND_MAX + 1.0) + 5.f;
+		newParticle.lifeLength = 10.f * (float)std::rand() / (RAND_MAX + 1.0f) + 5.f;
 		newParticle.rotation = 0;
-		newParticle.scale = glm::vec2((float)std::rand() / (RAND_MAX + 1.0));
+		newParticle.scale = glm::vec2((float)std::rand() / (RAND_MAX + 1.0f));
 		particleTime = 0;
 	}
 
@@ -227,8 +258,11 @@ void FinalProjectState::onUpdate(TrashEngine::Time delta)
 	light.position.x = sin(testTime) * 50.f;
 	testTime += delta;
 
-	const float speed = 25.f;
+	float speed = 25.f;
 	glm::vec3 vector = glm::vec3(0);
+	if (this->m_engine->getKeyboard()->isKeyDown(TrashEngine::Key::Z)) {
+		speed = 300.f;
+	}
 	if (this->m_engine->getKeyboard()->isKeyDown(TrashEngine::Key::W)) {
 		vector.z -= speed;
 	}
@@ -249,7 +283,7 @@ void FinalProjectState::onUpdate(TrashEngine::Time delta)
 	}
 	vector = camera.rotation * vector;
 	camera.position += vector * delta.asSecond();
-	if (this->m_engine->getMouse()->isButtonDown(TrashEngine::MouseButton::Left)) {
+	if (this->m_engine->getMouse()->isButtonDown(TrashEngine::MouseButton::Left) && this->m_engine->getKeyboard()->isKeyDown(TrashEngine::Key::V)) {
 		auto mouseDelta = -this->m_engine->getMouse()->getDelta();
 
 		glm::quat rx(glm::angleAxis(0.005f * mouseDelta.x, glm::vec3(0, 1, 0)));

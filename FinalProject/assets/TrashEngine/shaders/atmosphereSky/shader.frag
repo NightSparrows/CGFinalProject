@@ -133,7 +133,6 @@ vec3 computeSkyColor(vec3 ray, vec3 origin)
             // Next light sample
             tCurrentLight += segmentLenLight;
         }
-        // TODO check sample above ground
 
         // Attenuation of the light for both Rayleigh and Mie optical depth
         //  Mie extenction coeff. = 1.1 of the Mie scattering coeff.
