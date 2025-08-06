@@ -1,4 +1,4 @@
-#include "nspch.h"
+﻿#include "nspch.h"
 #include <core/Logger.h>
 #include "OpenGLAnimatedModelAnimator.h"
 
@@ -12,8 +12,12 @@ namespace TrashEngine {
 
 	void OpenGLAnimatedModelAnimator::update(Time delta)
 	{
-		if (this->m_targetAnimation.empty() && this->m_currentAnimation.empty())
+		if (this->m_targetAnimation.empty() && this->m_currentAnimation.empty()) {
+			for (uint32_t i = 0; i < m_model->getBones().size(); i++) {
+				this->m_boneTransformations[i] = glm::identity<glm::mat4>();
+			}
 			return;
+		}
 
 		if (this->m_targetAnimation == this->m_currentAnimation) {
 			this->m_targetAnimation.clear();
